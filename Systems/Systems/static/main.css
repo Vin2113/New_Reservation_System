@@ -78,3 +78,10 @@ a.article-title:hover {
 .account-heading {
   font-size: 2.5rem;
 }
+
+.arrow{
+  text-align: center;
+}
+.spacer:after {
+  content: '\200b';
+}

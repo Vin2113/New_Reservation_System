@@ -1,14 +1,22 @@
-import pymysql.cursors
-import cryptography
-from model import customer_connection
+import mysql.connector
+connection = mysql.connector.connect(host='localhost',
+                             user='root',
+                             password='Vl1021996499.',
+                            database = 'reservation_system'
+                           )
+cursor = connection.cursor()
+query = ('SELECT email FROM customer')
+cursor.execute(query)
+lst = []
+lst = [ i[0] for i in cursor]
+# print(lst)
+cursor.execute(query)
+new_list = []
+for all in cursor:
+    new_list.append(all[0])
+# print(new_list)
 
-with customer_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-    query = 'Select max(ticket_id) from ticket'
-    mycursor.execute(query)
-    data = mycursor.fetchall()
-    print(data)
-    # query = f"INSERT INTO ticket Values('{data[0]['max(ticket_id)'] +1}','Jet Blue', 455)"
-    # mycursor.execute(query)
-    # customer_connection.commit()
-    # mycursor.close()
-
+query = f"SELECT email from customer WHERE email = 'one@nyu.edu'"
+cursor.execute(query)
+user = [ i[0] for i in cursor if i[0] == 'one@nyu.edu' ]
+print(user)
