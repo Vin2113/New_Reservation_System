@@ -1,0 +1,135 @@
+Booking Agent View for most recent 30 day commissions and number of tickets
+'''
+Create View booking_agent_view as
+Select sum(price * .1) as commissions, count(ticket_id) as tickets, avg(commissions) as avg_commissions
+from flight inner join
+(Select *
+From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num
+Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and email = {input_email};
+'''
+
+#Booking Agent View for top 5 customers
+#for 6 month by number
+'''
+Create View top_5_customer_by_number as
+Select customer_email, count(ticket_id) as number_of_tickets
+from flight inner join
+(Select *
+From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num
+Where purchase_date > Date_Sub(curdate(), INTERVAL 6 MONTH) and email = {input_email}
+group by customer_email
+LIMIT 5;
+'''
+# for 1 year commissions
+'''
+Create View top_5_customer_by_commission as
+Select customer_email, sum(price * .1) as commissions
+from flight inner join
+(Select *
+From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num
+Where purchase_date > Date_Sub(curdate(), INTERVAL 1 YEAR) and email = input(email)
+group by customer_email
+LIMIT 5;
+'''
+
+
+Check for booking agent( if a booking agent does not work for an airline, then they cannot purchase tickets)
+Select email, count(airline_name)
+from booking_agent_work_for
+where email = {input_email}
+
+
+
+Checking Available Flights
+Create view available_flights as
+select airline_name, airplane_id, departure_airport, departure_time, arrival_airport, arrival_time, price, status, T.flight_num, (seats-tickets_purchased) num_of_available_tickets
+from  (Select * From airplane natural join flight) as S
+inner join (select flight_num, count(ticket_id ) as tickets_purchased
+FROM reservation_system.ticket
+group by flight_num) as T on S.flight_num = T.flight_num
+
+Customer Spending tracking
+Select sum(price) as spending
+from flight inner join
+(Select *
+From purchases natural join ticket) as T on flight.flight_num = T.flight_num
+Where customer_email = {input_email}
+
+
+Airline use cases
+Airline_Staff queries for checking permissions
+
+#Admin permission query
+SELECT permission_type
+From permission
+WHERE username = {str_username}
+
+#General Staff queries
+
+#View flights from their airline
+SELECT *
+From flight
+WHERE airline_name = session['airline_name'] and status = {input_status}
+
+#List of customers for a certain flight
+Select customer_email
+From ticket natural join purchases
+Where airline_name = session[airline_name] and flight_num = {input_flight_num}
+
+# See all flights taken by a certain customer
+Select flight_num
+From ticket natural join purchases
+Where airline_name = session[airline_name] and customer_email = {input_customer_email}
+
+#Most Frequent customer
+Select customer_email, count(ticket_id)
+From ticket natural join purchases
+Where airline_name = session[airline_name]
+group by customer_email
+Limit 1;
+
+Amount of tickets sold in a month
+Select count(ticket_id)
+From ticket natural join purchases
+Where airline_name = session[airline_name]
+group by customer_email
+Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and airline_name = {airline_name};
+Limit 1;
+
+# Top booking agents
+Create View top_booking_agent as
+Select email, sum(price * .1) as commissions
+from flight inner join
+(Select *
+From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num
+Where airline_name = session[airline_name]
+group by email
+
+#Admin insert airplane query
+
+Insert into airplane Values(session['airline_name'], airplane_id, seats)
+
+Insert flight into flights
+Insert into flight Values(session['airline_name'], flight_number, departure_airport, departure_time, arrival_airport, arrival_time, price, status, airplane_id)
+
+Admin insert airport for airline
+#create new table to keep track of information
+
+#adding new airports
+create table airline_available_airports as
+select airline.airline_name, airport.airport_name
+from airline,airports
+
+If airport did not exist
+
+Insert into airports Values(airport_name, airport_city)_
+Insert into airline_available_airports Values(session['airline_name'], airport_name)
+
+#Giving people permission
+Insert into permissions Values(username, permission_type)
+
+
+#Operator queries
+Update flight
+Set status = '{input_status}'
+Where flight_num = {input_flight_num)
