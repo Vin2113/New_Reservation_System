@@ -1,17 +1,13 @@
 {% extends "Layout.html" %}
 {% block content %}
 <div class="container">
-
     <form method= "post" action = "{{url_for('search')}}">
     {{ form.csrf_token }}
     <div class="row justify-content-center align-items-center">
     <div class = "col-md">
-    <div>From:</Div>
-        
+    <div>From:</Div>  
         {{ form.depart(class_="selectpicker", data_live_search="true")}}
-
     </div>
-
     <div class = "col-md text-center">
     <i class="fa-solid fa-arrow-right fa-2xl" ></i>
     </div>
@@ -21,12 +17,15 @@
     {{ form.arrival(class_="selectpicker",data_live_search="true")}}
     </div>
 </div>
+    <!--<div class ="row justify-content-center align-items-center">
+    {{ form.time }}
+    </div>-->
     <div class="row justify-content-center align-items-center">
     <div class="col text-center">
-    <input type="submit">
+    <input type="submit" class="btn btn-outline-primary btn-lg">
     </div>
 </div>
 </form>
 </div>
-{% endblock content%}
 {% block searchres %}{% endblock %}
+{% endblock content%}

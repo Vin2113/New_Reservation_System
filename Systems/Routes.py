@@ -14,8 +14,10 @@ def home():
     with model.connection.cursor(pymysql.cursors.DictCursor) as mycursor:
         mycursor.execute("SELECT * FROM airport ")
         depart = mycursor.fetchall()
-        print(depart)
+        mycursor.execute("SELECT departure_time FROM available_flights")
+        times = mycursor.fetchall()
         mycursor.close()
+    depart.insert(0,{"airport_name":"Anywhere","airport_city":"Anywhere"})
     form.depart.choices = [(location["airport_city"] + ", " + location["airport_name"], location["airport_city"] + ", " + location["airport_name"])for location in depart]
     form.arrival.choices = [(location["airport_city"] + ", " + location["airport_name"], location["airport_city"] + ", " + location["airport_name"])for location in depart]
     return render_template('Home.html', title='Home', form=form)
@@ -32,11 +34,20 @@ def search():
         al = dest.split(",")
         departa = l[1].strip()
         desta = al[1].strip()
-        with model.connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-            mycursor.execute("SELECT * FROM available_flights WHERE departure_airport=\'"+desta+"\'")
+        if(departa != "Anywhere"):
+            departa = "\'"+departa+"\'"
+        else:
+            departa = "departure_airport"
+        if(desta != "Anywhere"):
+            desta = "\'"+desta+"\'"
+        else:
+            desta = "arrival_airport"
+        with connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            mycursor.execute("SELECT * FROM available_flights WHERE departure_airport=" + departa)
             res = mycursor.fetchall()
             print(res)
             mycursor.close()
+        
         return render_template('Search.html', title='Home', form=form, res=res)
 
 
@@ -50,8 +61,11 @@ def register():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         phone_number = int(str(form.phone_number.data))
         email = str(form.email.data)
-        exp_time = datetime.datetime(int(form.passport_expiration.data[-4:-1]), int(form.passport_expiration.data[0:2]), int(form.passport_expiration.data[3:5]))
-        dob_time = datetime.datetime(int(form.date_of_birth.data[-4:-1]), int(form.date_of_birth.data[0:2]), int(form.date_of_birth.data[3:5]))
+        exp_time = form.passport_expiration.data
+        print(exp_time)
+        dob_time = form.date_of_birth.data
+        print(dob_time)
+        #datetime.datetime(int(form.date_of_birth.data[-4:-1]), int(form.date_of_birth.data[0:2]), int(form.date_of_birth.data[3:5]))
         query = f"Insert INTO customer VALUES('{email}', '{form.name.data}', '{hashed_password}','{form.building_number.data}','{form.street.data}','{form.city.data}','{form.state.data}', {phone_number} ,'{form.passport_number.data}','{exp_time}','{form.passport_country.data}','{dob_time}')"
         my_cursor = model.connection.cursor()
         my_cursor.execute(query)
