@@ -21,9 +21,9 @@
 </head>
 <body>
      <header class="site-header">
-      <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+      <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
         <div class="container">
-          <a class="navbar-brand mr-4" href="/">Ticketnet</a>
+          <a class="navbar-brand mr-4" href="/">Reservation</a>
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
@@ -36,7 +36,9 @@
               {% if session['loggedin'] == True %}
                 <a class="nav-item nav-link" href="{{ url_for('logout') }}">Logout</a>
               {% else %}
-                <a class="nav-item nav-link" href="{{ url_for('login') }}">Login</a>
+                <a class="nav-item nav-link" href="{{ url_for('login') }}">Customer Login</a>
+                <a class="nav-item nav-link" href="{{ url_for('agent_login') }}">Agent Login</a>
+                <a class="nav-item nav-link" href="{{ url_for('staff_login') }}">Staff Login</a>
                 <a class="nav-item nav-link" href="{{ url_for('register') }}">Register</a>
               {% endif %}
             </div>
@@ -56,9 +58,8 @@
                 {% endfor %}
               {% endif %}
             {% endwith %}
-            {% block content %}{% endblock %}
+          {% block content %}{% endblock %}
         </div>
-        
       </div>
     </main>
 
