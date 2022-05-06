@@ -1,4 +1,42 @@
-{% extends 'Home.html' %}
-{% block Searchres %}
-
-{% endblock Searchres%}
+{% extends "Home.html" %}
+{% block searchres %}
+<table class="table table-hover table-dark">
+    <thead>
+        <tr>
+            <th scope="col">Airline</th>
+            <th scope="col">Departure Airport</th>
+            <th scope="col">Departure Time</th>
+            <th scope="col">Arrival Airport</th>
+            <th scope="col">Arrival Time</th>
+            <th scope="col">Price</th>
+            <th scope="col">Status</th>
+            <th scope="col">Flight Number</th>
+        </tr>
+    </thead>
+    <tbody>
+            {% for i in res %}
+            <tr>
+                <td>{{ i.airline_name }}</td>
+                <td>{{ i.departure_airport }}</td>
+                <td>{{ i.departure_time }}</td>
+                <td>{{ i.arrival_airport }}</td>
+                <td>{{ i.airline_time }}</td>
+                <td>{{ i.price }}</td>
+                <td>{{ i.status }}</td>
+                <td>{{ i.flight_num }}</td>
+                <td>
+                    <button class="btn btn-outline btn-info">More Info</button>
+                    <button class="btn btn-outline btn-success">Purchase</button>
+                </td>
+            </tr>
+            {% endfor %}
+    </tbody>
+</table>
+<p>
+    <div class ="col-md">
+        <a href="{{ url_for('home') }}"> 
+            <button type="button" class="btn btn-primary btn-lg">Back</button>  
+        </a>
+    </div>
+</p>
+{% endblock searchres%}

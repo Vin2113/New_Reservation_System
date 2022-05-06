@@ -85,3 +85,7 @@ a.article-title:hover {
 .spacer:after {
   content: '\200b';
 }
+
+.btn-lg{
+  width: 30%;
+}

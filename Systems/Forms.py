@@ -5,7 +5,7 @@ from jmespath import search
 from datetime import datetime, date
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, SelectField
-from wtforms.fields import DateTimeField
+from wtforms.fields import DateTimeField, DateField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from wtforms_components import DateRange
 from Reservation import login_manager
@@ -41,7 +41,7 @@ class RegistrationForm(FlaskForm):
                         validators=[DataRequired(), Length(max=11)])
     passport_number = StringField('passport_number',
                                validators=[DataRequired(), Length(max=30)])
-    passport_expiration = StringField('passport_expiration',
+    passport_expiration = DateField('Passport Expiration', format ='%Y/%m/%d',
                                validators=[DataRequired(), Length(max=50)])
     passport_country = StringField('passport_country',
                                validators=[DataRequired(), Length(max=50)])
