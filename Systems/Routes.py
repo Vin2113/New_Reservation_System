@@ -14,8 +14,6 @@ def home():
     with connection.cursor(pymysql.cursors.DictCursor) as mycursor:
         mycursor.execute("SELECT * FROM airport ")
         depart = mycursor.fetchall()
-        mycursor.execute("SELECT departure_time FROM available_flights")
-        times = mycursor.fetchall()
         mycursor.close()
     depart.insert(0,{"airport_name":"Anywhere","airport_city":"Anywhere"})
     form.depart.choices = [(location["airport_city"] + ", " + location["airport_name"], location["airport_city"] + ", " + location["airport_name"])for location in depart]
@@ -28,6 +26,18 @@ def search():
     if form.validate_on_submit():
         depart = form.depart.data
         dest = form.arrival.data
+        date = form.time.data
+        if(date != ""):
+            dateandtime=date.split(',')
+            date = dateandtime[0].strip()
+            time = dateandtime[1].strip()
+            date = date.split('/')
+            time= time.split(':')
+            dateandtime = datetime.datetime(int(date[2]),int(date[0]),int(date[1]),int(time[0]),int(time[1]))
+            dateandtime = '\'' + str(dateandtime) + '\''
+            print(dateandtime)
+        else:
+            dateandtime = "departure_time"
         form.depart.choices = [(form.depart.data,form.depart.data)]
         form.arrival.choices = [(form.arrival.data,form.arrival.data)]
         l = depart.split(",")
@@ -43,7 +53,7 @@ def search():
         else:
             desta = "arrival_airport"
         with connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-            mycursor.execute("SELECT * FROM available_flights WHERE departure_airport=" + departa)
+            mycursor.execute("select * from available_flights where departure_airport =" + departa + " and arrival_airport ="+ desta +" and departure_time = " + dateandtime)
             res = mycursor.fetchall()
             print(res)
             mycursor.close()
@@ -62,11 +72,10 @@ def register():
         phone_number = int(str(form.phone_number.data))
         email = str(form.email.data)
         exp_time = form.passport_expiration.data
-        print(exp_time)
         dob_time = form.date_of_birth.data
-        print(dob_time)
         #datetime.datetime(int(form.date_of_birth.data[-4:-1]), int(form.date_of_birth.data[0:2]), int(form.date_of_birth.data[3:5]))
         query = f"Insert INTO customer VALUES('{email}', '{form.name.data}', '{hashed_password}','{form.building_number.data}','{form.street.data}','{form.city.data}','{form.state.data}', {phone_number} ,'{form.passport_number.data}','{exp_time}','{form.passport_country.data}','{dob_time}')"
+        
         my_cursor.execute(query)
         connection.commit()
         flash(f'You can now login {form.name.data}!', 'success')
