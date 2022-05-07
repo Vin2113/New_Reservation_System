@@ -158,3 +158,75 @@ class Booking_agent_LoginForm(FlaskForm):
 
     remember = BooleanField('Remember Me')
     submit = SubmitField('Login')
+
+class Staff_insert_airplane_Form(FlaskForm):
+    email = StringField('Email',
+                        validators=[DataRequired(), Email()])
+    submit = SubmitField('Login')
+
+class Staff_insert_airport_Form(FlaskForm):
+    airport_name = StringField('Airport Name',
+                        validators=[DataRequired()])
+    airport_city = StringField('Airport_City',
+                              validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+    def validate_airport(self, airport_name):
+        with model.staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            str_airport_name = str(airport_name.data)
+            query = f"Select airport_name from airline_available_airports where airport_name = '{str_airport_name}' "
+            mycursor.execute(query)
+            data = mycursor.fetchall()
+            mycursor.close()
+            print(data)
+            if data:
+                raise ValidationError('Airport Already in System')
+
+
+class Staff_grant_permission_Form(FlaskForm):
+    username = StringField('Admin_Username',
+                        validators=[DataRequired()])
+    status = StringField('Permission Type',
+                              validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+    def validate_username(self, username, status):
+        status_type = ['Admin', 'Operator']
+        if str(status.data) not in status_type:
+            raise ValidationError('Please type the right status')
+
+        with model.staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            str_username = str(username.data)
+            query = f"Select username from airline_staff where username = '{str_username}'"
+            mycursor.execute(query)
+            data = mycursor.fetchall()
+            mycursor.close()
+            if data:
+                raise ValidationError('User is not a staff, check usernamee')
+
+        with model.staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            str_username = str(username.data)
+            query = f"Select username from permissions where username = '{str_username}' AND permission_type = '{str(status.data)}'"
+            mycursor.execute(query)
+            data = mycursor.fetchall()
+            mycursor.close()
+            if data:
+                raise ValidationError('User already have this permission')
+
+class Staff_add_booking_agent_Form(FlaskForm):
+
+    email = StringField('Booking_agent email',
+                        validators=[DataRequired(), Email()])
+
+    submit = SubmitField('Submit')
+
+    def validate_email(self, email):
+        with model.staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            str_email = str(email.data)
+            query = f"Select email from booking_agent where email = '{str_email}'"
+            mycursor.execute(query)
+            data = mycursor.fetchone()
+            mycursor.close()
+            if data is None:
+                raise ValidationError('Agent is not registered')
+
