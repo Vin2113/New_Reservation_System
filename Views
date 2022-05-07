@@ -44,9 +44,9 @@ Checking Available Flights
 Create view available_flights as
 select airline_name, airplane_id, departure_airport, departure_time, arrival_airport, arrival_time, price, status, T.flight_num, (seats-tickets_purchased) num_of_available_tickets
 from  (Select * From airplane natural join flight) as S
-inner join (select flight_num, count(ticket_id ) as tickets_purchased
-FROM reservation_system.ticket
-group by flight_num) as T on S.flight_num = T.flight_num
+inner join (Select flight.flight_num , count(ticket_id) as tickets_purchased
+FROM flight left join ticket on ticket.flight_num = flight.flight_num
+Group by flight_num) as T on S.flight_num = T.flight_num
 
 Customer Spending tracking
 Select sum(price) as spending
