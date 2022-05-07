@@ -1,0 +1,44 @@
+{% extends "Layout.html" %}
+{% block content %}
+
+<body>
+Check for comission and tickets <a class = 'ml-2' href="{{ url_for('agent_account') }}">Click here</a>
+Booking Agent View for top 5 customers for 6 month by number <a class = 'ml-2' href="{{ url_for('agent_account') }}">Click here</a>
+for 1 year commissions <a class = 'ml-2' href="{{ url_for('agent_account') }}">Click here</a>
+
+data.ticket
+<title>JavaScript Bar Chart</title>
+      <script src="https://cdn.anychart.com/releases/8.0.0/js/anychart-base.min.js"></script>
+<div id="container" style="width: 100%; height: 100%"></div>
+    {% for data in data %}
+    <script>
+      anychart.onDocumentReady(function() {
+
+        // set the data
+        var data = {
+            header: ["Name", "Death toll"],
+            rows: [
+              [Commissions, data.commissions],
+              [Ticket, data.tickets]
+
+        ]};
+
+        // create the chart
+        var chart = anychart.bar();
+
+        // add the data
+        chart.data(data);
+
+        // set the chart title
+        chart.title("Commissions");
+
+        // draw
+        chart.container("container");
+        chart.draw();
+      });
+    </script>
+     {% endfor %}
+
+
+</body>
+{% endblock content %}
