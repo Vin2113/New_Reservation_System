@@ -130,6 +130,10 @@ class SearchForm(FlaskForm):
     arrival = SelectField("Arrival", choices =[],validate_choice=False)
     time = StringField("Departure Date")
 
+class statuscheckForm(FlaskForm):
+    fnumber = StringField("Flight Number", validators=[DataRequired()])
+    submit = SubmitField()
+
 class Airline_staff_LoginForm(FlaskForm):
     name = StringField('Username',
                        validators=[DataRequired(), Length(max=50)])

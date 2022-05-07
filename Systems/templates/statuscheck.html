@@ -1,0 +1,21 @@
+{% extends 'Layout.html' %}
+{% block content%}
+<div class="container">
+<form method='POST'>
+    {{ form.csrf_token }}
+    <div class='row justify-content-center align-items-center'>
+        <div class = 'col-md'>
+            {{ form.fnumber }}
+        </div>
+    </div>
+    <div class="row justify-content-center align-items-center">
+        <div class="col text-center">
+          <input type="submit" class="btn btn-outline-primary btn-lg" />
+        </div>
+      </div>
+</form>
+{% if session['status_search'] != NONE%}
+    <h1> {{session['status_search']}}</h1>
+{% endif %}
+</div>
+{% endblock %}
