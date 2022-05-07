@@ -155,7 +155,7 @@ def agent_login():
         if account[0] != str_email and bcrypt.check_password_hash(account[1], form.password.data) and id == account[2]:
             session['type'] = 'agent'
             session['loggedin'] = True
-            session['customer'] = account[0]
+            session['agent'] = account[0]
             session['password'] = account[1]
             flash('Login Successful', 'success')
             return redirect(url_for('home'))
@@ -201,12 +201,12 @@ def logout():
     # Remove session data, this will log the user out
     if session['type'] == 'customer':
         session.pop('loggedin', None)
-        session.pop('email', None)
+        session.pop('customer', None)
         session.pop('password', None)
         session.pop('type', None)
     elif session['type'] == 'agent':
         session.pop('loggedin', None)
-        session.pop('email', None)
+        session.pop('agent', None)
         session.pop('password', None)
         session.pop('type', None)
     elif session['type'] == 'staff':
@@ -223,9 +223,10 @@ def logout():
 # Redirect to login page
     return redirect(url_for('home'))
 
-@app.route('/customer_purchase', methods = ["GET", 'Post'])
+@app.route('/customer_purchase', methods = ["GET", 'POST'])
 def purchase():
     if session['loggedin'] == True and session['customer'] != None:
+        #purchae and update
         with model.customer_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             query = 'Select max(ticket_id) from ticket'
             mycursor.execute(query)
@@ -235,6 +236,58 @@ def purchase():
             mycursor.execute(query)
             model.customer_connection.commit()
             mycursor.close()
+
+@app.route('/customer_profile', methods = ['GET', 'POST'])
+def customer_account():
+    #pulling spending
+    with model.customer_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+        query = f"Select sum(price) as spending "\
+                "from flight inner join " \
+                "Select * From purchases natural join ticket) as T on flight.flight_num = T.flight_num "\
+                 f"Where customer_email = {session['customer']};"
+        mycursor.execute(query)
+        data = mycursor.fetchall()
+        print(data)
+        mycursor.close()
+
+@app.route('/agent_profile', methods = ['GET', 'POST'])
+def agent_account():
+
+    # Booking Agent View for most recent 30 day commissions and number of tickets
+    with model.agent_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+        query_1 = "Select sum(price * .1) as commissions, count(ticket_id) as tickets from flight inner join(Select * From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and email = 'Booking@agent.com';"
+        mycursor.execute(query_1)
+        data = mycursor.fetchall()
+        mycursor.close()
+
+    return render_template('agent_profile.html', data = data)
+
+    # Booking Agent View for top 5 customers for 6 month by number
+    #     query_2 = "Create View top_5_customer_by_number as" \
+    #             "Select customer_email, count(ticket_id) as number_of_tickets" \
+    #             "from flight inner join (Select * From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num" \
+    #             f"Where purchase_date > Date_Sub(curdate(), INTERVAL 6 MONTH) and email = {session['agent']}" \
+    #             "group by customer_email" \
+    #             "LIMIT 5;"
+
+    # for 1 year commissions
+    #     query_3 = f'''Create View top_5_customer_by_commission as
+    #     Select customer_email, sum(price * .1) as commissions
+    #     from flight inner join
+    #     (Select *
+    #     From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num
+    #     Where purchase_date > Date_Sub(curdate(), INTERVAL 1 YEAR) and email = {session['agent']}
+    #     group by customer_email
+    #     LIMIT 5;
+    #     '''
+    #     #data = mycursore.execute(query).fetchall()
+    #     available_airlines =  mycursor.execute(f'''Select
+    #     email, count(airline_name)
+    #     from booking_agent_work_for
+    #     where
+    #     email = {session['agent']}''').fetchall()
+
+# @app.route('/staff_profile', methods = ['GET', 'POST'])
 
 
 
