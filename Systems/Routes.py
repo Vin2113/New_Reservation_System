@@ -42,7 +42,7 @@ def search():
             desta = "\'"+desta+"\'"
         else:
             desta = "arrival_airport"
-        with connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+        with model.connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             mycursor.execute("SELECT * FROM available_flights WHERE departure_airport=" + departa)
             res = mycursor.fetchall()
             print(res)
@@ -215,6 +215,7 @@ def logout():
 @app.route('/customer_purchase', methods = ["GET", 'POST'])
 def purchase():
     if session['loggedin'] == True and session['customer'] != None:
+        #purchae and update
         with model.customer_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             query = 'Select max(ticket_id) from ticket'
             mycursor.execute(query)
@@ -240,40 +241,40 @@ def customer_account():
 
 @app.route('/agent_profile', methods = ['GET', 'POST'])
 def agent_account():
-    return render_template('agent_profile.html')
+
     # Booking Agent View for most recent 30 day commissions and number of tickets
     with model.agent_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-        query_1 = f"Select sum(price * .1) as commissions, count(ticket_id) as tickets, avg(commissions) as avg_commissions" \
-                f"from flight inner join(Select *" \
-                f"From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num" \
-                f"Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and email = {session['agent']};"
-        mycursor.execute(query)
+        query_1 = "Select sum(price * .1) as commissions, count(ticket_id) as tickets from flight inner join(Select * From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and email = 'Booking@agent.com';"
+        mycursor.execute(query_1)
         data = mycursor.fetchall()
-        print(data)
         mycursor.close()
+
+    return render_template('agent_profile.html', data = data)
+
     # Booking Agent View for top 5 customers for 6 month by number
-        query_2 = "Create View top_5_customer_by_number as" \
-                "Select customer_email, count(ticket_id) as number_of_tickets" \
-                "from flight inner join (Select * From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num" \
-                f"Where purchase_date > Date_Sub(curdate(), INTERVAL 6 MONTH) and email = {session['agent']}" \
-                "group by customer_email" \
-                "LIMIT 5;"
+    #     query_2 = "Create View top_5_customer_by_number as" \
+    #             "Select customer_email, count(ticket_id) as number_of_tickets" \
+    #             "from flight inner join (Select * From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num" \
+    #             f"Where purchase_date > Date_Sub(curdate(), INTERVAL 6 MONTH) and email = {session['agent']}" \
+    #             "group by customer_email" \
+    #             "LIMIT 5;"
 
     # for 1 year commissions
-        query_3 = f'''Create View top_5_customer_by_commission as
-        Select customer_email, sum(price * .1) as commissions
-        from flight inner join
-        (Select *
-        From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num
-        Where purchase_date > Date_Sub(curdate(), INTERVAL 1 YEAR) and email = {session['agent']}
-        group by customer_email
-        LIMIT 5;
-        '''
-    available_airlines =  mycursor.execute(f'''Select
-    email, count(airline_name)
-    from booking_agent_work_for
-    where
-    email = {session['agent']}''').fetchall()
+    #     query_3 = f'''Create View top_5_customer_by_commission as
+    #     Select customer_email, sum(price * .1) as commissions
+    #     from flight inner join
+    #     (Select *
+    #     From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num
+    #     Where purchase_date > Date_Sub(curdate(), INTERVAL 1 YEAR) and email = {session['agent']}
+    #     group by customer_email
+    #     LIMIT 5;
+    #     '''
+    #     #data = mycursore.execute(query).fetchall()
+    #     available_airlines =  mycursor.execute(f'''Select
+    #     email, count(airline_name)
+    #     from booking_agent_work_for
+    #     where
+    #     email = {session['agent']}''').fetchall()
 
 # @app.route('/staff_profile', methods = ['GET', 'POST'])
 
