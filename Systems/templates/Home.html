@@ -1,31 +1,73 @@
-{% extends "Layout.html" %}
-{% block content %}
+{% extends "Layout.html" %} {% block content %}
+<script
+  src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"
+  integrity="sha384-eMNCOe7tC1doHpGoWe/6oMVemdAVTMs2xqW4mwXrXsW0L84Iytr2wi5v2QjrP/xp"
+  crossorigin="anonymous"
+></script>
+<!-- Tempus Dominus JavaScript -->
+<script
+  src="https://cdn.jsdelivr.net/gh/Eonasdan/tempus-dominus@master/dist/js/tempus-dominus.js"
+  crossorigin="anonymous"
+></script>
+<!-- Tempus Dominus Styles -->
+<link
+  href="https://cdn.jsdelivr.net/gh/Eonasdan/tempus-dominus@master/dist/css/tempus-dominus.css"
+  rel="stylesheet"
+  crossorigin="anonymous"
+/>
+
 <div class="container">
-    <form method= "post" action = "{{url_for('search')}}">
+  <form method="post" action="{{url_for('search')}}">
     {{ form.csrf_token }}
     <div class="row justify-content-center align-items-center">
-    <div class = "col-md">
-    <div>From:</Div>  
+      <div class="col-md">
+        <div>From:</div>
         {{ form.depart(class_="selectpicker", data_live_search="true")}}
-    </div>
-    <div class = "col-md text-center">
-    <i class="fa-solid fa-arrow-right fa-2xl" ></i>
-    </div>
+      </div>
+      <div class="col-md text-center">
+        <i class="fa-solid fa-arrow-right fa-2xl"></i>
+      </div>
 
-    <div class = "col-md">
-    <div>To:</div>
-    {{ form.arrival(class_="selectpicker",data_live_search="true")}}
+      <div class="col-md">
+        <div>To:</div>
+        {{ form.arrival(class_="selectpicker",data_live_search="true")}}
+      </div>
     </div>
-</div>
-    <!--<div class ="row justify-content-center align-items-center">
-    {{ form.time }}
-    </div>-->
+    <div
+      class="input-group"
+      id="datetimepicker1"
+      data-td-target-input="nearest"
+      data-td-target-toggle="nearest"
+    >
+      {{ form.time (class_='form_control',data_td_target='#datetimepicker1') }}
+      <script>
+        var td = new tempusDominus.TempusDominus(
+          document.getElementById("time"),
+          {
+            display: {
+              viewMode: "calendar",
+              components: {
+                useTwentyfourHour: true,
+              },
+            },
+          }
+        );
+      </script>
+      <span
+        class="input-group-text"
+        data-td-target="#datetimepicker1"
+        data-td-toggle="datetimepicker"
+      >
+        <span class="fa-solid fa-calendar"></span>
+      </span>
+    </div>
     <div class="row justify-content-center align-items-center">
-    <div class="col text-center">
-    <input type="submit" class="btn btn-outline-primary btn-lg">
+      <div class="col text-center">
+        <input type="submit" class="btn btn-outline-primary btn-lg" />
+      </div>
     </div>
+  </form>
+
+  
 </div>
-</form>
-</div>
-{% block searchres %}{% endblock %}
-{% endblock content%}
+{% block searchres %}{% endblock %} {% endblock content%}

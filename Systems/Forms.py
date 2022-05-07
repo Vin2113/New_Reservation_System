@@ -6,7 +6,7 @@ from datetime import datetime, date
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, SelectField
 from wtforms.fields import DateTimeField, DateField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
+from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError,Optional
 from wtforms_components import DateRange
 from Reservation import login_manager
 import model
@@ -47,12 +47,10 @@ class RegistrationForm(FlaskForm):
                         validators=[DataRequired(), Length(max=11)])
     passport_number = StringField('passport_number',
                                validators=[DataRequired(), Length(max=30)])
-    passport_expiration = DateField('Passport Expiration', format ='%Y/%m/%d',
-                               validators=[DataRequired(), Length(max=50)])
+    passport_expiration = DateTimeField('passport_expiration', format ='%Y-%m-%d', validators=[DataRequired()])
     passport_country = StringField('passport_country',
-                               validators=[DataRequired(), Length(max=50)])
-    date_of_birth = StringField('date_of_birth',
-                               validators=[DataRequired(), Length(max=10)])
+                                validators=[DataRequired(), Length(max=50)])
+    date_of_birth = DateTimeField('date_of_birth',format ='%Y-%m-%d', validators=[DataRequired()])
 
     submit = SubmitField('Sign Up')
 
@@ -126,6 +124,15 @@ class LoginForm(FlaskForm):
                            validators=[DataRequired()])
     remember = BooleanField('Remember Me')
     submit = SubmitField('Login')
+
+class SearchForm(FlaskForm):
+    depart = SelectField("Departure", choices =[],validate_choice=False)
+    arrival = SelectField("Arrival", choices =[],validate_choice=False)
+    time = StringField("Departure Date")
+
+class statuscheckForm(FlaskForm):
+    fnumber = StringField("Flight Number", validators=[DataRequired()])
+    submit = SubmitField()
 
 class Airline_staff_LoginForm(FlaskForm):
     name = StringField('Username',
