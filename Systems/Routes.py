@@ -62,7 +62,6 @@ def search():
 
 
 @app.route('/register', methods=["GET", 'POST'])
-
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
@@ -82,6 +81,8 @@ def register():
         flash(f'You can now login {form.name.data}!', 'success')
         return redirect(url_for('login'))
     return render_template('Register.html', title='Register', form=form)
+
+
 @app.route('/agent_register', methods=["GET", 'POST'])
 def agent_register():
     form = Agent_RegistrationForm()
@@ -193,6 +194,8 @@ def staff_login():
         else:
             flash('Login unsuccesful, please check Username, Password, and Airline_name.', 'danger')
     return render_template('Staff_login.html', title='Login', form=form)
+
+
 @app.route('/logout', methods=["GET", 'POST'])
 def logout():
     # Remove session data, this will log the user out
