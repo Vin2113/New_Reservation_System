@@ -1,5 +1,5 @@
 from Reservation import app, bcrypt
-from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm
+from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm, customerpurchaseForm
 from flask_login import login_user, current_user, logout_user, login_required
 from flask import render_template, flash, redirect, session, request, url_for
 import datetime
@@ -23,13 +23,14 @@ def home():
 @app.route('/statuscheck',methods=["GET","POST"])
 def scheck():
     form = statuscheckForm()
+    session.pop('status_search', None)
     if request.method == "POST":
         num = form.fnumber.data
         with connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             mycursor.execute("SELECT status FROM available_flights where flight_num = " + '\'' + num + '\'')
             status = mycursor.fetchall()
             mycursor.close()
-        session['status_search'] = status
+        session['status_search'] = status[0]['status']
     
     return render_template('statuscheck.html',title = 'statuscheck', form=form)
     
@@ -40,12 +41,33 @@ def scheck():
 @app.route('/search', methods = ["POST"])
 def search():
     form=SearchForm()
+    purchaseform=customerpurchaseForm()
     if request.method == "POST":
-        print(request.form)
+        if purchaseform.submit.data == True:
+            f_aln = request.form.get('tairlinen')
+            f_num = request.form.get('tfnum')
+
+            
+            if session['loggedin'] == True and session['username'] != None:
+            #purchase and update
+                with customer_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+                    query = 'Select max(ticket_id) from ticket'
+                    mycursor.execute(query)
+                    data = mycursor.fetchall()
+                    print(data)
+                    tid = data[0]['max(ticket_id)'] + 1
+                    query = f"INSERT INTO ticket Values('{tid}','{f_aln}', {f_num})"
+                    mycursor.execute(query)
+                    customer_connection.commit()
+                    query = f"INSERT INTO purchases Values('{tid}','{session['username']}', NULL ,'{datetime.datetime.now()}')"
+                    mycursor.execute(query)
+                    customer_connection.commit()
+                    mycursor.close()
+                return redirect(url_for('home'))
         depart = form.depart.data
         dest = form.arrival.data
         date = form.time.data
-        if(date != ""):
+        if(date != "" and date !=None):
             dateandtime=date.split(',')
             date = dateandtime[0].strip()
             time = dateandtime[1].strip()
@@ -57,17 +79,21 @@ def search():
             dateandtime = "departure_time"
         form.depart.choices = [(form.depart.data,form.depart.data)]
         form.arrival.choices = [(form.arrival.data,form.arrival.data)]
-        l = depart.split(",")
-        al = dest.split(",")
-        departa = l[1].strip()
-        desta = al[1].strip()
-        if(departa != "Anywhere"):
-            departa = "\'"+departa+"\'"
+        if(depart != None and dest != None):
+            l = depart.split(",")
+            al = dest.split(",")
+            departa = l[1].strip()
+            desta = al[1].strip()
+            if(departa != "Anywhere"):
+                departa = "\'"+departa+"\'"
+            else:
+                departa = "departure_airport"
+            if(desta != "Anywhere"):
+                desta = "\'"+desta+"\'"
+            else:
+                desta = "arrival_airport"
         else:
             departa = "departure_airport"
-        if(desta != "Anywhere"):
-            desta = "\'"+desta+"\'"
-        else:
             desta = "arrival_airport"
             
         with connection.cursor(pymysql.cursors.DictCursor) as mycursor:
@@ -75,7 +101,7 @@ def search():
             res = mycursor.fetchall()
             mycursor.close()
                 
-        return render_template('Search.html', title='Home', form=form, res=res)
+        return render_template('Search.html', title='Home', form=form, res=res, purchaseform=purchaseform)
 
 
 @app.route('/register', methods=["GET", 'POST'])
