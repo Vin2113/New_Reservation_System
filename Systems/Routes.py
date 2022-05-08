@@ -265,14 +265,14 @@ def staff_login():
                 data = mycursor.fetchall()
                 for i in data:
                     if i[0] == "Admin":
-                        session['Admin'] == True
+                        session['Admin'] = True
                     if i[0] == "Operator":
-                        session['Operator'] == True
+                        session['Operator'] = True
                 session['type'] = 'staff'
                 session['loggedin'] = True
                 session['username'] = account[0]
                 session['password'] = account[1]
-                session['airline'] = str_airline_name
+                session['airline_name'] = str_airline_name
                 flash('Login Successful', 'success')
                 mycursor.close()
                 return redirect(url_for('staff_profile'))
@@ -381,7 +381,7 @@ def staff_profile():
     # Most Frequent customer
     #query_5 = f"Select customer_email, count(ticket_id) From ticket natural join purchases Where airline_name = '{session['airline_name']}' group by customer_email Limit 1;"
     #Admin Queries
-    render_template('staff_profile.html')
+    return render_template('staff_profile.html')
 @app.route('/admin_insert_airport', methods=['GET', 'POST'])
 def admin_insert_airport():
     form = Staff_insert_airport_Form()
@@ -402,7 +402,7 @@ def admin_insert_airport():
                 staff_connection.commit()
         with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             str_airport_name = form.airport_name.data
-            query = f"Insert into airline_available_airports Values('Jet Blue', '{str_airport_name}')"
+            query = f"Insert into airline_available_airports Values('{session['airline_name']}', '{str_airport_name}')"
             mycursor.execute(query)
             staff_connection.commit()
             mycursor.close()
@@ -419,7 +419,7 @@ def grant_permission():
         with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             str_username = str(form.username.data)
             str_status = str(form.status.data)
-            query = f"Select username from airline_staff where username = '{str_username}' and airline_name = 'Jet Blue'"
+            query = f"Select username from airline_staff where username = '{str_username}' and airline_name = '{session['airline_name']}'"
             mycursor.execute(query)
             data = mycursor.fetchone()
             if data is None:
@@ -447,7 +447,7 @@ def add_booking_agent():
     if form.validate_on_submit():
         with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             str_email = str(form.email.data)
-            query = f"Select email from booking_agent_work_for where email = '{str_email}' and airline_name =  'Jet Blue'"
+            query = f"Select email from booking_agent_work_for where email = '{str_email}' and airline_name =  '{session['airline_name']}'"
             mycursor.execute(query)
             data = mycursor.fetchone()
             mycursor.close()
@@ -456,7 +456,7 @@ def add_booking_agent():
             else:
                 with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
                     str_email = str(form.email.data)
-                    query = f"Insert into booking_agent_work_for Values('{str_email}', 'Jet Blue')"
+                    query = f"Insert into booking_agent_work_for Values('{str_email}', '{session['airline_name']}')"
                     mycursor.execute(query)
                     staff_connection.commit()
                     mycursor.close()
@@ -489,7 +489,7 @@ def add_flight():
             flash('error occured', 'danger')
             return redirect(url_for('home'))
 
-    return render_template('add_flight.htlm', form = form)
+    return render_template('add_flight.html', form = form)
 
 
 #operater use case
