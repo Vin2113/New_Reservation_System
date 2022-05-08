@@ -1,5 +1,6 @@
 from Reservation import app, bcrypt
-from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm, customerpurchaseForm
+from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, customerpurchaseForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm, Staff_insert_airport_Form, Staff_grant_permission_Form, Staff_add_booking_agent_Form, Operator_Update_Flight_Form, add_flight_form
+
 from flask_login import login_user, current_user, logout_user, login_required
 from flask import render_template, flash, redirect, session, request, url_for
 import datetime
@@ -228,7 +229,7 @@ def login():
             flash('Login Successful', 'success')
             return redirect(url_for('home'))
         else:
-            flash('Login unsuccesful, please check Email and Password.', 'danger')
+            flash('Login Unsuccesful, please check Email and Password.', 'danger')
     return render_template('Login.html', title='Login', form=form)
 
 @app.route('/agent_login', methods=["GET", 'POST'])
@@ -331,15 +332,12 @@ def customer_account():
 
 @app.route('/agent_profile', methods = ['GET', 'POST'])
 def agent_account():
-
     # Booking Agent View for most recent 30 day commissions and number of tickets
     with agent_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
         query_1 = "Select sum(price * .1) as commissions, count(ticket_id) as tickets from flight inner join(Select * From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and email = 'Booking@agent.com';"
         mycursor.execute(query_1)
         data = mycursor.fetchall()
         mycursor.close()
-        print(data)
-
     return render_template('agent_profile.html', data = data)
 
     # Booking Agent View for top 5 customers for 6 month by number
@@ -360,14 +358,126 @@ def agent_account():
     #     group by customer_email
     #     LIMIT 5;
     #     '''
-    #     #data = mycursore.execute(query).fetchall()
+    #     #data = mycursor.execute(query).fetchall()
     #     available_airlines =  mycursor.execute(f'''Select
     #     email, count(airline_name)
     #     from booking_agent_work_for
     #     where
     #     email = {session['username']}''').fetchall()
 
-# @app.route('/staff_profile', methods = ['GET', 'POST'])
+@app.route('/staff_profile', methods = ['GET', 'POST'])
+def staff_profile():
+    # Query for all staffs
+    # all flights within a staffs airline
+    #query = f"SELECT * From flight WHERE airline_name = '{session['airline_name']}'"
+
+    # View upcoming flights within the staffs airline by status
+    #query_1 = f"SELECT * From flight WHERE airline_name = '{session['airline_name']}' and status = 'upcoming'"
+
+    #view all customer of particular
+    #query_2 = f"Select customer_email From ticket natural join purchases Where airline_name = '{session['airline_name']}' and flight_num = '{input_flight_num}'
+
+    # See all flights taken by a certain customer
+    #query_3 = f"Select flight_num From ticket natural join purchases Where airline_name = '{session['airline_name']}' and customer_email = {input_customer_email}
+
+    #Reports of of tickets sold
+    #Amount of tickets sold in a month
+    #query_4 = f"Select count(ticket_id) From ticket natural join purchases Where airline_name = session[airline_name] group by customer_email Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and airline_name = {airline_name}; Limit 1;"
+
+    # Most Frequent customer
+    #query_5 = f"Select customer_email, count(ticket_id) From ticket natural join purchases Where airline_name = '{session['airline_name']}' group by customer_email Limit 1;"
+
+
+    #Admin Queries
+    #New Airplane
+
+    query_5 = f"Insert into airplane Values('{session['airline_name']}', airplane_id, seats)"
+
+    #Insert flight into flights
+    query_6 =f"Insert into flight Values('{session['airline_name']}', flight_number, departure_airport, departure_time, arrival_airport, arrival_time, price, status, airplane_id)"
+
+@app.route('/admin_insert_airport', methods=['GET', 'POST'])
+def admin_insert_airport():
+    form = Staff_insert_airport_Form()
+    if form.validate_on_submit():
+    #Admin insert airport for airline
+        with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            str_airport_name = str(form.airport_name.data)
+            query = f"Select airport_name from airport where airport_name = '{str_airport_name}' "
+            mycursor.execute(query)
+            data = mycursor.fetchall()
+            mycursor.close()
+        if not data:
+            str_aiport_city = str(form.airport_city.data)
+            with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+                query = f"Insert into airport Values('{str_airport_name}', '{str_aiport_city}')"
+                mycursor.execute(query)
+                mycursor.close()
+                staff_connection.commit()
+        with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            str_airport_name = form.airport_name.data
+            query = f"Insert into airline_available_airports Values('Jet Blue', '{str_airport_name}')"
+            mycursor.execute(query)
+            staff_connection.commit()
+            mycursor.close()
+            #Search for customer on a flight
+        flash('Added Airport', 'success')
+        return redirect(url_for('home'))
+    return render_template('insert_airport.html', form=form)
+
+@app.route('/admin_grant_permission', methods=['GET', 'POST'])
+def grant_permission():
+    form = Staff_grant_permission_Form()
+    if form.validate_on_submit():
+        # Admin insert airport for airline
+        with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            str_username = str(form.username.data)
+            str_status = str(form.status.data)
+            query = f"Insert into permission Values('{str_username}', '{str_status}')"
+            mycursor.execute(query)
+            staff_connection.commit()
+            mycursor.close()
+        flash('Permission Granted', 'success')
+        # return redirect(url_for('home'))
+    return render_template('staff_grant_permission.html', form=form)
+
+@app.route('/add_booking_agent', methods=['GET', 'POST'])
+def add_booking_agent():
+    form = Staff_add_booking_agent_Form()
+    # Admin insert airport for airline
+    if form.validate_on_submit():
+        with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            str_email = str(form.email.data)
+            query = f"Insert into booking_agent_work_for Values('{str_email}', 'Jet Blue')"
+            mycursor.execute(query)
+            staff_connection.commit()
+            mycursor.close()
+        flash('Agent Added', 'success')
+        return redirect(url_for('home'))
+
+    return render_template('staff_add_booking_agent.html', form=form)
+
+# @app.route('/add_flight', methods=['GET', 'POST'])
+# def add_flight():
+#     form = add_flight_form()
+#     if form.validate_on_submit():
+
+#operater use case
+@app.route('/update_flight', methods=['GET', 'POST'])
+def update_flight():
+    form = Operator_Update_Flight_Form()
+    if form.validate_on_submit():
+        with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            str_flight_status = str(form.flight_status.data)
+            str_flight_num = str(form.flight_num.data)
+            query = f"UPDATE flight SET status = '{str_flight_status}' WHERE flight_num = '{str_flight_num}';"
+            mycursor.execute(query)
+            staff_connection.commit()
+            mycursor.close()
+
+
+
+
 
 
 
