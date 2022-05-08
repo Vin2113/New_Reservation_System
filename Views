@@ -8,6 +8,19 @@ From booking_agent natural join purchases natural join ticket) as T on flight.fl
 Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and email = {input_email};
 '''
 
+#add customer if customer does not exist on purchase
+with agent_connection.cursor(pymysql.cursors.DictCursor) as my_cursor:
+    query = f'select customer_email from customer where customer_email = '{input_email}'
+    my_cursor.execute(query)
+    data = my_cursor.fetchone()
+    hashed_password = bcrypt.generate_password_hash(password.data).decode('utf-8')
+    if data is None:
+        query = f"Insert INTO customer VALUES('{email}', '{name.data}', '{hashed_password}','{form.building_number.data}','{form.street.data}','{form.city.data}','{form.state.data}', {phone_number} ,'{form.passport_number.data}','{exp_time}','{form.passport_country.data}','{dob_time}')"
+        my_cursor = execute(query)
+        agent_connection.commit()
+    my_cursor.close()
+
+
 #Booking Agent View for top 5 customers
 #for 6 month by number
 '''
