@@ -1,4 +1,3 @@
-import nntplib
 from sre_constants import SUCCESS
 from Reservation import app, bcrypt
 from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, customerpurchaseForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm, Staff_insert_airport_Form, Staff_grant_permission_Form, Staff_add_booking_agent_Form, Operator_Update_Flight_Form, add_flight_form,rangeForm
@@ -52,9 +51,9 @@ def profile():
     if(session['type'] == 'customer'):
         return redirect(url_for('profileCust',Username = session['username']))
     if(session['type'] == 'agent'):
-        return redirect(url_for('agent_account',Username = session['username']))
+        return redirect(url_for('agent_account',username=session['username']))
     if(session['type'] == 'staff'):
-        return redirect(url_for('profileStf', Username = session['username']))
+        return redirect(url_for('staff_profile', username=session['username']))
     
 
 @app.route('/profile/<Username>', methods=["GET","POST"])
@@ -154,15 +153,6 @@ def rangesearch(username,datef,dates):
     print(ldata)
     return render_template('Crangesearch.html', title='Rangesearch', label=label, ldata=ldata, sumoney = sumoney)
 
-
-
-@app.route('/profileStf/<Username>', methods=["GET","POST"])
-def profileStf(Username):
-    return render_template('Profile.html', title='')
-        #with connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-            #mycursor.execute("SELECT ")
-            #history = mycursor.fetchall()
-            #mycursor.close()
         
 
 @app.route('/search', methods = ["POST"])
@@ -394,6 +384,7 @@ def agent_login():
                 session['password'] = account[1]
                 session['id'] = account[2]
                 session['alines'] = data
+                session['comdatas'] = None
                 flash('Login Successful', 'success')
                 return redirect(url_for('home'))
             else:
@@ -427,7 +418,7 @@ def staff_login():
                 session['airline_name'] = str_airline_name
                 flash('Login Successful', 'success')
                 mycursor.close()
-                return redirect(url_for('staff_profile'))
+                return redirect(url_for('staff_profile', username=session['username']))
             else:
                 flash('Login unsuccesful, please check Username, Password, and Airline_name.', 'danger')
     return render_template('Staff_login.html', title='Login', form=form)
@@ -452,6 +443,7 @@ def logout():
         session.pop('id', None)
         session.pop('data',None)
         session.pop('aline',None)
+        session.pop('comdatas', None)
         session.pop('type', None)
     elif session['type'] == 'staff':
         session.pop('loggedin', None)
@@ -459,10 +451,8 @@ def logout():
         session.pop('password', None)
         session.pop('airline', None)
         session.pop('type', None)
-        if session['Admin']:
-            session.pop('Admin', None)
-        if session['Operator']:
-            session.pop('Operator', None)
+        session.pop('Admin', None)
+        session.pop('Operator', None)
 
 # Redirect to login page
     return redirect(url_for('home'))
@@ -480,15 +470,47 @@ def customer_account():
         print(data)
         mycursor.close()
 
-@app.route('/profileAgent/<Username>', methods = ['GET', 'POST'])
-def agent_account(Username):
+@app.route('/profileAgent/<username>', methods = ['GET', 'POST'])
+def agent_account(username):
+    form = rangeForm()
     # Booking Agent View for most recent 30 day commissions and number of tickets
+    session.pop('comdatas', None)
     with agent_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-        query_1 = "Select sum(price * .1) as commissions, count(ticket_id) as tickets from flight inner join(Select * From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and email = 'Booking@agent.com';"
-        mycursor.execute(query_1)
-        data = mycursor.fetchall()
+        query = f"Select sum(price * .1) as commissions, count(ticket_id) as tickets from flight inner join(Select * From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and email = '{session['username']}';"
+        mycursor.execute(query)
+        sumcomthirty = mycursor.fetchall()
+        query = f"select F.airline_name, F.flight_num, F.departure_airport, F.departure_time, F.arrival_airport, F.arrival_time, F.price, F.status, P.customer_email from flight as F left join ticket as T on F.flight_num = T.flight_num left join purchases as P on T.ticket_id = P.ticket_id left join booking_agent as B on P.booking_agent_id = B.booking_agent_id where B.email = '{session['username']}'"
+        mycursor.execute(query)
+        phist = mycursor.fetchall()
+        query = f"Select customer_email, count(ticket_id) as number_of_tickets from flight inner join (Select * From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num Where purchase_date > Date_Sub(curdate(), INTERVAL 6 MONTH) and email = '{session['username']}' group by customer_email LIMIT 5;"
+        mycursor.execute(query)
+        tfct = mycursor.fetchall()
+        query = f"Select customer_email, sum(price * .1) as commissions from flight inner join (Select * From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num Where purchase_date > Date_Sub(curdate(), INTERVAL 1 YEAR) and email = '{session['username']}' group by customer_email LIMIT 5;"
+        mycursor.execute(query)
+        tfcc = mycursor.fetchall()
         mycursor.close()
-    return render_template('agent_profile.html', data = data)
+    
+    tlabels = [i['customer_email'] for i in tfct]
+    clabels = [i['customer_email'] for i in tfcc]
+    tdata = [i['number_of_tickets'] for i in tfct]
+    cdata = [float(i['commissions']) for i in tfcc]
+    
+    if request.method == "POST":
+            fdate = form.dateone.data
+            sdate = form.datetwo.data
+            with agent_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+                query = f"Select sum(price * .1) as commissions, count(ticket_id) as tickets from flight inner join(Select * From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num Where purchase_date <= '{fdate}' AND purchase_date >='{sdate}' and email = '{session['username']}'"
+                mycursor.execute(query)
+                rangecom = mycursor.fetchall()
+            comdatas = []
+            comdatas.append(rangecom[0]['commissions'])
+            comdatas.append(rangecom[0]['tickets'])
+            session['comdatas'] = comdatas
+                
+            
+            
+            
+    return render_template('agent_profile.html', form = form, title=username, sumcomthirty = sumcomthirty, phist=phist, tfct=tfct, tfcc = tfcc, tlabels = tlabels, tdata=tdata, clabels=clabels, cdata=cdata)
 
     # Booking Agent View for top 5 customers for 6 month by number
     #     query_2 = "Create View top_5_customer_by_number as" \
@@ -515,28 +537,28 @@ def agent_account(Username):
     #     where
     #     email = {session['username']}''').fetchall()
 
-@app.route('/staff_profile', methods = ['GET', 'POST'])
-def staff_profile():
-    # Query for all staffs
-    # all flights within a staffs airline
-    #query = f"SELECT * From flight WHERE airline_name = '{session['airline_name']}'"
+@app.route('/staff_profile/<username>', methods = ['GET', 'POST'])
+def staff_profile(username):
+# Query for all staffs
+# all flights within a staffs airline
+#query = f"SELECT * From flight WHERE airline_name = '{session['airline_name']}'"
 
-    # View upcoming flights within the staffs airline by status
-    #query_1 = f"SELECT * From flight WHERE airline_name = '{session['airline_name']}' and status = 'upcoming'"
+# View upcoming flights within the staffs airline by status
+#query_1 = f"SELECT * From flight WHERE airline_name = '{session['airline_name']}' and status = 'upcoming'"
 
-    #view all customer of particular
-    #query_2 = f"Select customer_email From ticket natural join purchases Where airline_name = '{session['airline_name']}' and flight_num = '{input_flight_num}'
+#view all customer of particular
+#query_2 = f"Select customer_email From ticket natural join purchases Where airline_name = '{session['airline_name']}' and flight_num = '{input_flight_num}'
 
-    # See all flights taken by a certain customer
-    #query_3 = f"Select flight_num From ticket natural join purchases Where airline_name = '{session['airline_name']}' and customer_email = {input_customer_email}
+# See all flights taken by a certain customer
+#query_3 = f"Select flight_num From ticket natural join purchases Where airline_name = '{session['airline_name']}' and customer_email = {input_customer_email}
 
-    #Reports of of tickets sold
-    #Amount of tickets sold in a month
-    #query_4 = f"Select count(ticket_id) From ticket natural join purchases Where airline_name = session[airline_name] group by customer_email Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and airline_name = {airline_name}; Limit 1;"
+#Reports of of tickets sold
+#Amount of tickets sold in a month
+#query_4 = f"Select count(ticket_id) From ticket natural join purchases Where airline_name = session[airline_name] group by customer_email Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and airline_name = {airline_name}; Limit 1;"
 
-    # Most Frequent customer
-    #query_5 = f"Select customer_email, count(ticket_id) From ticket natural join purchases Where airline_name = '{session['airline_name']}' group by customer_email Limit 1;"
-    #Admin Queries
+# Most Frequent customer
+#query_5 = f"Select customer_email, count(ticket_id) From ticket natural join purchases Where airline_name = '{session['airline_name']}' group by customer_email Limit 1;"
+#Admin Queries
     return render_template('staff_profile.html')
 @app.route('/admin_insert_airport', methods=['GET', 'POST'])
 def admin_insert_airport():

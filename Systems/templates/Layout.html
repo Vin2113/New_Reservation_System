@@ -86,18 +86,6 @@
                 >Register</a
               >
               {% endif %}
-              {% if session['type'] == 'customer' %}
-                  <a class="nav-item nav-link" href="{{ url_for('customer_profile') }}"
-                >Account</a>
-              {% endif %}
-              {% if session['type'] == 'agent' %}
-                  <a class="nav-item nav-link" href="{{ url_for('agent_profile') }}"
-                >Account</a>
-              {% endif %}
-              {% if session['type'] == 'staff' %}
-                  <a class="nav-item nav-link" href="{{ url_for('staff_profile') }}"
-                  >Account</a>
-              {% endif %}
             </div>
           </div>
         </div>

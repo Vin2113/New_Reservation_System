@@ -1,58 +1,115 @@
 {% extends "Layout.html" %}
 {% block content %}
-
 <div class="container">
-  <form method="post" action="{{url_for('search')}}">
-    {{ form.csrf_token }}
-    <div class="row justify-content-center align-items-center">
-      <div class="col-md">
-        <div>From:</div>
-        {{ form.depart(class_="selectpicker", data_live_search="true")}}
-      </div>
-      <div class="col-md text-center">
-        <i class="fa-solid fa-arrow-right fa-2xl"></i>
-      </div>
-
-      <div class="col-md">
-        <div>To:</div>
-        {{ form.arrival(class_="selectpicker",data_live_search="true")}}
-      </div>
+  <div class="row justify-content-center align-items-center">
+    <div class="col-md">
+      <h2>Customer Flights:</h2>
     </div>
-    <div
-      class="input-group"
-      id="datetimepicker1"
-      data-td-target-input="nearest"
-      data-td-target-toggle="nearest"
-    >
-      {{ form.time (class_='form_control',data_td_target='#datetimepicker1') }}
-      <script>
-        var td = new tempusDominus.TempusDominus(
-          document.getElementById("time"),
-          {
-            display: {
-              viewMode: "calendar",
-              components: {
-                useTwentyfourHour: true,
-              },
-            },
-          }
-        );
-      </script>
-      <span
-        class="input-group-text"
-        data-td-target="#datetimepicker1"
-        data-td-toggle="datetimepicker"
-      >
-        <span class="fa-solid fa-calendar"></span>
-      </span>
+  </div>
+  <table class="table table-hover table-dark">
+    <thead>
+      <tr>
+        <th scope="col">Airline</th>
+        <th scope="col">Departure Airport</th>
+        <th scope="col">Departure Time</th>
+        <th scope="col">Arrival Airport</th>
+        <th scope="col">Arrival Time</th>
+        <th scope="col">Price</th>
+        <th scope="col">Status</th>
+        <th scope="col">Flight Number</th>
+        <th scope="col">Customer Email</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in phist %}
+      <tr>
+        <td>{{ i.airline_name }}</td>
+        <td>{{ i.departure_airport }}</td>
+        <td>{{ i.departure_time }}</td>
+        <td>{{ i.arrival_airport }}</td>
+        <td>{{ i.airline_time }}</td>
+        <td>{{ i.price }}</td>
+        <td>{{ i.status }}</td>
+        <td>{{ i.flight_num }}</td>
+        <td>{{ i.customer_email}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="row justify-content-center align-items-center">
+    <div class="col-md">
+      <h2>Total Commission (30days) = ${{sumcomthirty[0]['commissions']}}</h2>
+      <h2>Average Commission per ticket (30days) = ${{sumcomthirty[0]['commissions'] / sumcomthirty[0]['tickets']}}</h2>
     </div>
-    <div class="row justify-content-center align-items-center">
-      <div class="col text-center">
-        <input type="submit" class="btn btn-outline-primary btn-lg" />
-      </div>
+  </div>
+  <div class="row justify-content-center align-items-center">
+    <div class="col-md">
+      <h2>Top 5 Customer by tickets purchased in the last month:</h2>
     </div>
-  </form>
-
-
+  </div>
+  <table class="table table-hover table-dark">
+    <thead>
+      <tr>
+        <th scope="col">Customer</th>
+        <th scope="col">Ticket Count</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in tfct %}
+      <tr>
+        <td>{{ i.customer_email }}</td>
+        <td>{{ i.number_of_tickets}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="row justify-content-center align-items-center">
+    <div class="col-md">
+      <h2>Top 5 Customer by commission earned in the last month:</h2>
+    </div>
+  </div>
+  <table class="table table-hover table-dark">
+    <thead>
+      <tr>
+        <th scope="col">Customer</th>
+        <th scope="col">Comission</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in tfcc %}
+      <tr>
+        <td>{{ i.customer_email }}</td>
+        <td>{{ i.commissions}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <canvas id="tfct" width="800" height="400"></canvas>
+  <script>
+    var ctx = document.getElementById('tfct').getContext('2d');
+    var barchart = new Chart(ctx, {type:'bar', data: {labels: {{ tlabels | safe}} , datasets:[{ label:'# of Ticket', data: {{ tdata | safe}} , fill: true, backgroundColor: "rgba(195, 247, 72, 0.3)", borderColor:"rgba(124, 72, 247.0.9)",borderWidth: 1}]}});
+  </script>
+  <canvas id="tfcc" width="800" height="400"></canvas>
+  <script>
+    var ctx = document.getElementById('tfcc').getContext('2d');
+    var barchart = new Chart(ctx, {type:'bar', data: {labels: {{ clabels | safe}} , datasets:[{ label:'$ of commission', data: {{ cdata | safe}} , fill: true, backgroundColor: "rgba(195, 247, 72, 0.3)", borderColor:"rgba(124, 72, 247.0.9)",borderWidth: 1}]}});
+  </script>
+  <div class="row">
+    <div class="col-md">
+    <form method="post">
+      {{ form.dateone(class='form-control') }}
+      {{ form.datetwo(class='form-control') }}
+      {{ form.submit(class= 'btn btn-outline btn-secondary') }}
+    </form>
+  </div>
+  <div class="row justify-content-center align-items-center">
+    <div class="col-md">
+    {% if session['comdatas']%}
+    <h2>Total Commission recived in range= ${{ session['comdatas'][0] }}</h2>
+    <h2>Total tickets sold in range= {{ session['comdatas'][1] }}</h2>
+    {% endif %}
+  </div>
+</div>
+  </div>
 </div>
 {% endblock content %}

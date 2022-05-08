@@ -41,8 +41,8 @@ BOOKING AGENT:
 -View top customers
 	~top 5 customers based on number of tickets bought during 6 months
 	~top 5 based on commission recived in last year
-	~bar char of each of 5 customers in c and tickets in y
-	~bar chart of 5 customers in x and tickets sold
+	~bar char of each of 5 customers in x and tickets in y
+	~bar chart of 5 customers in x and comm in y
 -Logout
 
 ============================================================================================

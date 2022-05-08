@@ -1,7 +1,7 @@
 {% extends "Layout.html" %}
 {% block content %}
   <div class="container">
-    {% if session['Admin'] == True %}
+    {% if session['Admin'] %}
     <a class="nav-item nav-link" href="{{ url_for('admin_insert_airport') }}"
                 >Insert Airport</a>
     <a class="nav-item nav-link" href="{{ url_for('grant_permission') }}"
@@ -10,11 +10,13 @@
                 >Add Agent</a>
     <a class="nav-item nav-link" href="{{ url_for('add_flight') }}"
                 >Add Flight</a>
-              {% endif %}
-    {% if session['Operator'] == 'True' %}
+    {% endif %}
+
+    {% if session['Operator'] %}
                   <a class="nav-item nav-link" href="{{ url_for('update_flight') }}"
                 >update_flight</a>
-              {% endif %}
+    {% endif %}
+
   </div>
 
 {% endblock content %}
