@@ -425,12 +425,25 @@ def grant_permission():
         with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             str_username = str(form.username.data)
             str_status = str(form.status.data)
-            query = f"Insert into permission Values('{str_username}', '{str_status}')"
+            query = f"Select username from airline_staff where username = '{str_username}' and airline_name = 'Jet Blue'"
             mycursor.execute(query)
-            staff_connection.commit()
-            mycursor.close()
-        flash('Permission Granted', 'success')
-        # return redirect(url_for('home'))
+            data = mycursor.fetchone()
+            if data is None:
+                flash('User is not a staff, Pleas type in the right username', 'danger')
+            else:
+                query = f"Select username from permission where username = '{str_username}' AND permission_type = '{str_status}'"
+                mycursor.execute(query)
+                data = mycursor.fetchall()
+                mycursor.close()
+                if data:
+                    flash('User already have this permission')
+                else:
+                    query = f"Insert into permission Values('{str_username}', '{str_status}')"
+                    mycursor.execute(query)
+                    staff_connection.commit()
+                mycursor.close()
+                flash('Permission Granted', 'success')
+                return redirect(url_for('home'))
     return render_template('staff_grant_permission.html', form=form)
 
 @app.route('/add_booking_agent', methods=['GET', 'POST'])
@@ -440,13 +453,21 @@ def add_booking_agent():
     if form.validate_on_submit():
         with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             str_email = str(form.email.data)
-            query = f"Insert into booking_agent_work_for Values('{str_email}', 'Jet Blue')"
+            query = f"Select email from booking_agent_work_for where email = '{str_email}' and airline_name =  'Jet Blue'"
             mycursor.execute(query)
-            staff_connection.commit()
+            data = mycursor.fetchone()
             mycursor.close()
-        flash('Agent Added', 'success')
-        return redirect(url_for('home'))
-
+            if data:
+                flash('Agent Already Added', 'success')
+            else:
+                with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+                    str_email = str(form.email.data)
+                    query = f"Insert into booking_agent_work_for Values('{str_email}', 'Jet Blue')"
+                    mycursor.execute(query)
+                    staff_connection.commit()
+                    mycursor.close()
+                flash('Agent Added', 'success')
+                return redirect(url_for('home'))
     return render_template('staff_add_booking_agent.html', form=form)
 
 # @app.route('/add_flight', methods=['GET', 'POST'])
@@ -466,6 +487,7 @@ def update_flight():
             mycursor.execute(query)
             staff_connection.commit()
             mycursor.close()
+    return render_template('staff_update_flight.html', form=form)
 
 
 

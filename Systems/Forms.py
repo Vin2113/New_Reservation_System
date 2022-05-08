@@ -199,34 +199,20 @@ class Staff_insert_airport_Form(FlaskForm):
 
 
 class Staff_grant_permission_Form(FlaskForm):
-    username = StringField('Admin_Username',
+    username = StringField('Admin Username',
                         validators=[DataRequired()])
     status = StringField('Permission Type',
                               validators=[DataRequired()])
     submit = SubmitField('Submit')
 
-    def validate_username(self, username, status):
+    def validate_status(self, status):
         status_type = ['Admin', 'Operator']
         if str(status.data) not in status_type:
             raise ValidationError('Please type the right status')
 
-        with model.staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-            str_username = str(username.data)
-            query = f"Select username from airline_staff where username = '{str_username}'"
-            mycursor.execute(query)
-            data = mycursor.fetchall()
-            mycursor.close()
-            if data:
-                raise ValidationError('User is not a staff, check usernamee')
 
-        with model.staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-            str_username = str(username.data)
-            query = f"Select username from permissions where username = '{str_username}' AND permission_type = '{str(status.data)}'"
-            mycursor.execute(query)
-            data = mycursor.fetchall()
-            mycursor.close()
-            if data:
-                raise ValidationError('User already have this permission')
+
+
 
 class Staff_add_booking_agent_Form(FlaskForm):
 
@@ -244,6 +230,7 @@ class Staff_add_booking_agent_Form(FlaskForm):
             mycursor.close()
             if data is None:
                 raise ValidationError('Agent is not registered')
+
 class Operator_Update_Flight_Form(FlaskForm):
     flight_num = StringField('Flight Number',
                         validators=[DataRequired()])
