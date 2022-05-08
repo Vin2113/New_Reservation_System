@@ -52,7 +52,7 @@ def profile():
     if(session['type'] == 'customer'):
         return redirect(url_for('profileCust',Username = session['username']))
     if(session['type'] == 'agent'):
-        return redirect(url_for('profileAgent',Username = session['username']))
+        return redirect(url_for('agent_account',Username = session['username']))
     if(session['type'] == 'staff'):
         return redirect(url_for('profileStf', Username = session['username']))
     
@@ -154,16 +154,6 @@ def rangesearch(username,datef,dates):
     print(ldata)
     return render_template('Crangesearch.html', title='Rangesearch', label=label, ldata=ldata, sumoney = sumoney)
 
-
-
-@app.route('/profileAgent/<Username>', methods=["GET","POST"])
-def profileAgent(Username):
-    session.pop('history',None)
-    return render_template('Profile.html', title='')
-        #with connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-            #mycursor.execute("SELECT ")
-            #history = mycursor.fetchall()
-            #mycursor.close()
 
 
 @app.route('/profileStf/<Username>', methods=["GET","POST"])
@@ -485,8 +475,8 @@ def customer_account():
         print(data)
         mycursor.close()
 
-@app.route('/agent_profile', methods = ['GET', 'POST'])
-def agent_account():
+@app.route('/profileAgent/<Username>', methods = ['GET', 'POST'])
+def agent_account(Username):
     # Booking Agent View for most recent 30 day commissions and number of tickets
     with agent_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
         query_1 = "Select sum(price * .1) as commissions, count(ticket_id) as tickets from flight inner join(Select * From booking_agent natural join purchases natural join ticket) as T on flight.flight_num = T.flight_num Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and email = 'Booking@agent.com';"
