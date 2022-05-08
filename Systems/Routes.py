@@ -49,12 +49,13 @@ def profile():
 
 @app.route('/profile/<Username>', methods=["GET","POST"])
 def profileCust(Username):
-    with connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-            session.pop('history',None)
+    with customer_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             query = f"select F.airline_name, F.flight_num, F.departure_airport, F.departure_time, F.arrival_airport, F.arrival_time, F.price, F.status, F.airplane_id, T.ticket_id from flight as F right join ticket as T on F.flight_num=T.flight_num right join (select * from purchases where customer_email = '{session['username']}') as P on T.ticket_id = P.ticket_id"
             mycursor.execute(query)
             history = mycursor.fetchall()
             session['history'] = history
+            print(history)
+            print(session['history'])
             mycursor.close()
     return render_template('Profile.html', title='Profile')
 
@@ -83,10 +84,11 @@ def search():
     purchaseform=customerpurchaseForm()
     if request.method == "POST":
         if purchaseform.submit.data == True:
+            if (session['type'] == 'agent'):
+                return redirect(url_for(''))
             f_aln = request.form.get('tairlinen')
             f_num = request.form.get('tfnum')
 
-            
             if session['loggedin'] == True and session['username'] != None:
             #purchase and update
                 with customer_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
@@ -142,6 +144,12 @@ def search():
                 
         return render_template('Search.html', title='Home', form=form, res=res, purchaseform=purchaseform)
 
+
+@app.route('/purchaseagent/<data>')
+def purchaseagent(data):
+    pdata= data
+    print(data)
+    return redirect(url_for('home'))
 
 @app.route('/register', methods=["GET", 'POST'])
 def register():

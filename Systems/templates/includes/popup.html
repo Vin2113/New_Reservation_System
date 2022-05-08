@@ -54,6 +54,10 @@
             </h4>
             <form method="POST">
                 {{ purchaseform.csrf_Token }}
+                {% if session['type'] == 'agent'%}
+                <label for='customeremil'> Customer Email </label>
+                <input id="customeremail" class='form-control' name="customeremail" type="text" placeholder='Customer Email'>
+                {% endif %}
                 <input id="tairlinen" name="tairlinen" type="hidden" value="{{ i.airline_name }}">
                 <input id="tfnum" name="tfnum" type="hidden" value="{{ i.flight_num }}">
                 {{ purchaseform.submit (class='btn btn-primary btn-block') }}
