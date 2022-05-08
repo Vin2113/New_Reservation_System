@@ -44,9 +44,9 @@ Checking Available Flights
 Create view available_flights as
 select airline_name, airplane_id, departure_airport, departure_time, arrival_airport, arrival_time, price, status, T.flight_num, (seats-tickets_purchased) num_of_available_tickets
 from  (Select * From airplane natural join flight) as S
-inner join (select flight_num, count(ticket_id ) as tickets_purchased
-FROM reservation_system.ticket
-group by flight_num) as T on S.flight_num = T.flight_num
+inner join (Select flight.flight_num , count(ticket_id) as tickets_purchased
+FROM flight left join ticket on ticket.flight_num = flight.flight_num
+Group by flight_num) as T on S.flight_num = T.flight_num
 
 Customer Spending tracking
 Select sum(price) as spending
@@ -82,11 +82,11 @@ From ticket natural join purchases
 Where airline_name = session[airline_name] and customer_email = {input_customer_email}
 
 #Most Frequent customer
-Select customer_email, count(ticket_id)
+`Select customer_email, count(ticket_id)
 From ticket natural join purchases
 Where airline_name = session[airline_name]
 group by customer_email
-Limit 1;
+Limit 1;`
 
 Amount of tickets sold in a month
 Select count(ticket_id)
@@ -118,11 +118,17 @@ Admin insert airport for airline
 #adding new airports
 create table airline_available_airports as
 select airline.airline_name, airport.airport_name
-from airline,airports
+from airline,airport;
+
+ALTER TABLE airline_available_airports
+ADD CONSTRAINT PRIMARY KEY (airline_name,airport_name),
+ADD CONSTRAINT FOREIGN KEY (airline_name) REFERENCES airline(airline_name) ON DELETE CASCADE,
+ADD CONSTRAINT FOREIGN KEY (airport_name) REFERENCES airport(airport_name) ON DELETE CASCADE;
+
 
 If airport did not exist
-
 Insert into airports Values(airport_name, airport_city)_
+
 Insert into airline_available_airports Values(session['airline_name'], airport_name)
 
 #Giving people permission

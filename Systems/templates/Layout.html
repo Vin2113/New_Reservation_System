@@ -65,8 +65,7 @@
                 <a class="nav-link" href="{{ url_for('profile') }}">{{ session['username'] }}</a>
               </li>
               <a class="nav-item nav-link" href="{{ url_for('logout') }}"
-                >Logout</a
-              >
+                >Logout</a>
               {% else %}
               <a class="nav-item nav-link" href="{{ url_for('login') }}"
                 >Customer Login</a
@@ -80,6 +79,18 @@
               <a class="nav-item nav-link" href="{{ url_for('register') }}"
                 >Register</a
               >
+              {% endif %}
+              {% if session['customer'] == 'customer' %}
+                  <a class="nav-item nav-link" href="{{ url_for('customer_profile') }}"
+                >Account</a>
+              {% endif %}
+              {% if session['customer'] == 'agent' %}
+                  <a class="nav-item nav-link" href="{{ url_for('agent_profile') }}"
+                >Account</a>
+              {% endif %}
+              {% if session['customer'] == 'staff' %}
+                  <a class="nav-item nav-link" href="{{ url_for('staff_profile') }}"
+                  >Account</a>
               {% endif %}
             </div>
           </div>

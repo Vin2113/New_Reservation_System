@@ -1,7 +1,8 @@
-from model import my_cursor, connection
+from model import connection, agent_connection, staff_connection
+import pymysql
 
-query = f"SELECT email, password from customer WHERE email = 'vincent@gmail.com'"
-
-my_cursor.execute(query)
-account = my_cursor.fetchone()
-print(account)
+with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+    query = f"Select email from booking_agent where email = '112'"
+    mycursor.execute(query)
+    data = mycursor.fetchone()
+    print(data)
