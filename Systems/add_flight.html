@@ -1,0 +1,106 @@
+{% extends "Layout.html" %}
+{% block content %}
+  <div class="container">
+    <form method="POST" action="">
+      {{ form.hidden_tag() }}
+      <fieldset class = 'form-group'>
+        <legend class = 'border-bottom mb-4' > Grant Permission </legend>
+        <div class ='form-group'>
+          {{ form.dep_airport_name.label(class="form-control-label") }}
+            {% if form.dep_airport_name.errors %}
+                {{ form.dep_airport_name(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.dep_airport_name.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.dep_airport_name(class="form-control form-control-lg") }}
+            {% endif %}
+        </div>
+        <div class ='form-group'>
+          {{ form.arr_airport_name.label(class="form-control-label") }}
+            {% if form.arr_airport_name.errors %}
+                {{ form.arr_airport_name(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.arr_airport_name.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.arr_airport_name(class="form-control form-control-lg") }}
+            {% endif %}
+        </div>
+        <div class ='form-group'>
+          {{ form.dep_time.label(class="form-control-label") }}
+            {% if form.dep_time.errors %}
+                {{ form.dep_time(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.dep_time.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>dep_time
+            {% else %}
+                {{ form.dep_time(class="form-control form-control-lg") }}
+            {% endif %}
+        </div>
+        <div class ='form-group'>
+          {{ form.arr_time.label(class="form-control-label") }}
+            {% if form.arr_time.errors %}
+                {{ form.arr_time(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.arr_time.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.arr_time(class="form-control form-control-lg") }}
+            {% endif %}
+        </div>
+        <div class ='form-group'>
+          {{ form.price.label(class="form-control-label") }}
+            {% if form.pricestatus.errors %}
+                {{ form.pricestatus(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.pricestatus.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.price(class="form-control form-control-lg") }}
+            {% endif %}
+        </div>
+        <div class ='form-group'>
+          {{ form.status.label(class="form-control-label") }}
+            {% if form.status.errors %}
+                {{ form.status(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.status.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.status(class="form-control form-control-lg") }}
+            {% endif %}
+        </div>
+        <div class ='form-group'>
+          {{ form.airplane_id.label(class="form-control-label") }}
+            {% if form.airplane_id.errors %}
+                {{ form.airplane_id(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.airplane_id.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.airplane_id(class="form-control form-control-lg") }}
+            {% endif %}
+        </div>
+      </fieldset>
+      <div class ='form-group'>
+          {{ form.submit(class="form-control-label") }}
+      </div>
+
+    </form>
+  </div>
+{% endblock content %}

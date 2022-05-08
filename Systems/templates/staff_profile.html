@@ -1,0 +1,20 @@
+{% extends "Layout.html" %}
+{% block content %}
+  <div class="container">
+    {% if session['Admin'] == True %}
+    <a class="nav-item nav-link" href="{{ url_for('admin_insert_airport') }}"
+                >Insert Airport</a>
+    <a class="nav-item nav-link" href="{{ url_for('grant_permission') }}"
+                >Grant Permission To</a>
+    <a class="nav-item nav-link" href="{{ url_for('add_booking_agent') }}"
+                >Add Agent</a>
+    <a class="nav-item nav-link" href="{{ url_for('add_flight') }}"
+                >Add Flight</a>
+              {% endif %}
+    {% if session['Operator'] == 'True' %}
+                  <a class="nav-item nav-link" href="{{ url_for('update_flight') }}"
+                >update_flight</a>
+              {% endif %}
+  </div>
+
+{% endblock content %}
