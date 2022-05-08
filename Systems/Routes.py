@@ -1,7 +1,7 @@
 import nntplib
 from sre_constants import SUCCESS
 from Reservation import app, bcrypt
-from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, customerpurchaseForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm, Staff_insert_airport_Form, Staff_grant_permission_Form, Staff_add_booking_agent_Form, Operator_Update_Flight_Form, add_flight_form
+from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, customerpurchaseForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm, Staff_insert_airport_Form, Staff_grant_permission_Form, Staff_add_booking_agent_Form, Operator_Update_Flight_Form, add_flight_form,rangeForm
 from dateutil.rrule import rrule, MONTHLY
 from flask_login import login_user, current_user, logout_user, login_required
 from flask import render_template, flash, redirect, session, request, url_for
@@ -59,6 +59,7 @@ def profile():
 
 @app.route('/profile/<Username>', methods=["GET","POST"])
 def profileCust(Username):
+    form = rangeForm()
     session.pop('data',None)
     data={}
     with customer_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
@@ -103,11 +104,55 @@ def profileCust(Username):
     data['label'] = label
     data['ldata'] = ldata
     session['data'] = data
-    #session['span'] 
+    if request.method=="POST":
+        dateone = form.dateone.data
+        datetwo = form.datetwo.data
+        data['dates'] = [dateone, datetwo]
+        session['data'] = data
+        return redirect(url_for('rangesearch',username = session['username'], datef = dateone, dates = datetwo))
+         
     
-    return render_template('Profile.html', title='Profile')
+    return render_template('Profile.html', title='Profile', form=form)
 
-
+@app.route('/profile/<username>/<datef>to<dates>')
+def rangesearch(username,datef,dates):
+    with customer_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+        query = f"select monthname(P.purchase_date) as month, year(P.purchase_date) as year, sum(F.price) as spending from flight as F left join ticket as T on F.flight_num = T.flight_num right join purchases as P on T.ticket_id = P.ticket_id  where P.customer_email = '{session['username']}' and P.purchase_date <= '{datef}' AND P.purchase_date >='{dates}' group by month(P.purchase_date),year(P.purchase_date)"
+        mycursor.execute(query)
+        mdata= mycursor.fetchall()
+        query = f"select sum(F.price) as spending from flight as F left join ticket as T on F.flight_num = T.flight_num right join purchases as P on T.ticket_id = P.ticket_id  where P.customer_email = '{session['username']}' and P.purchase_date <= '{datef}' AND P.purchase_date >='{dates}'"
+        mycursor.execute(query)
+        sumoney = mycursor.fetchall()
+        mycursor.close()
+    datef = datef.split('-')
+    dates = dates.split('-')
+    datef = datetime(int(datef[0]), int(datef[1]), int(datef[2]))
+    dates = datetime(int(dates[0]),int(dates[1]),int(dates[2]))
+    label = []
+    ldata = []
+    span=[]
+    dataspan= []
+    datamod = []
+    sumoney = sumoney[0]['spending']
+    for t in monthspan(datef, dates):
+        temp = t.strftime("%Y")+ ", " +t.strftime("%B")
+        span.append(temp)    
+    for d in mdata:
+        datamod.append({'months':str(d['year'])+", " + d['month'], 'value':int(d['spending'])})
+        dataspan.append(str(d['year'])+", " + d['month'])
+    print(datamod)
+    for x in span:
+        if x not in dataspan:
+            label.append(x)
+            ldata.append(0)
+        else:
+            for y in datamod:
+                if y['months'] == x:
+                    label.append(x)
+                    ldata.append(y['value'])
+    print(label)
+    print(ldata)
+    return render_template('Crangesearch.html', title='Rangesearch', label=label, ldata=ldata, sumoney = sumoney)
 
 
 

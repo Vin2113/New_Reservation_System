@@ -158,7 +158,12 @@ class Airline_staff_LoginForm(FlaskForm):
     remember = BooleanField('Remember Me')
     submit = SubmitField('Login')
     
-    
+class rangeForm(FlaskForm):
+    dateone = DateField('Dateone',
+                        validators=[DataRequired()])
+    datetwo = DateField('Datetwo',
+                        validators=[DataRequired()])
+    submit = SubmitField('Submit')
     
 
 
