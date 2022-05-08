@@ -72,8 +72,6 @@ class Agent_RegistrationForm(FlaskForm):
 
     confirm_password = PasswordField('Confirm Password',
                            validators=[DataRequired(), EqualTo('password')])
-    Id = StringField('Booking Agent ID',
-                        validators=[DataRequired()])
     submit = SubmitField('Register')
     def validate_email(self, email):
         str_email = str(email.data)
@@ -242,29 +240,23 @@ class Operator_Update_Flight_Form(FlaskForm):
         if str(flight_status.data) not in status_type:
             raise ValidationError('Please type the right status')
 
-def not_equal_to_airport(airport2):
-    message = ' %s and %s cannot be the same.' % ('Departure Airport', 'Arrival Airport')
-    def _airport(FlaskForm, airport_name):
-        if airport_name.data == airport2.data:
-            raise ValidationError(message)
-
-    return _airport
-
 class add_flight_form(FlaskForm):
     dep_airport_name = StringField('Departure Airport Name',
                                validators=[DataRequired()])
     arr_airport_name = StringField('Arrival Airport Name',
-                               validators=[DataRequired(), not_equal_to_airport(dep_airport_name)])
-    dep_time = StringField("Departure Time yyyy/mm/dd/hh/mm/ss",
-                           validators=[DataRequired()])
-    arr_time = StringField("Arrival Time",
+                               validators=[DataRequired()])
+
+    dep_time = DateTimeField('Dep_time', format="%Y-%m-%d %H:%M:%S",
+                        validators=[DataRequired()])
+
+    arr_time = DateTimeField("Arrival Time", format="%Y-%m-%d %H:%M:%S",
                            validators=[DataRequired()])
 
-    price = StringField("Arrival Time",
+    price = StringField("Price",
                         validators=[DataRequired()])
-    status = StringField("Arrival Time",
+    status = StringField("Status",
                         validators=[DataRequired()])
-    airplane_id = StringField("Arrival Time",
+    airplane_id = StringField("Airplane ID",
                            validators=[DataRequired()])
 
     submit = SubmitField('Submit')
