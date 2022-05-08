@@ -1,5 +1,5 @@
 from Reservation import app, bcrypt
-from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm, Staff_insert_airport_Form, Staff_grant_permission_Form, Staff_add_booking_agent_Form, Operator_Update_Flight_Form, add_flight_form
+from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, customerpurchaseForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm, Staff_insert_airport_Form, Staff_grant_permission_Form, Staff_add_booking_agent_Form, Operator_Update_Flight_Form, add_flight_form
 from flask_login import login_user, current_user, logout_user, login_required
 from flask import render_template, flash, redirect, session, request, url_for
 import datetime
