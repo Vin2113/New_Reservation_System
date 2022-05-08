@@ -4,7 +4,7 @@
     <form method="POST" action="">
       {{ form.hidden_tag() }}
       <fieldset class = 'form-group'>
-        <legend class = 'border-bottom mb-4' > Grant Permission </legend>
+        <legend class = 'border-bottom mb-4' > Add Flight </legend>
         <div class ='form-group'>
           {{ form.dep_airport_name.label(class="form-control-label") }}
             {% if form.dep_airport_name.errors %}
@@ -32,37 +32,19 @@
             {% endif %}
         </div>
         <div class ='form-group'>
-          {{ form.dep_time.label(class="form-control-label") }}
-            {% if form.dep_time.errors %}
-                {{ form.dep_time(class="form-control form-control-lg is-invalid") }}
-                <div class="invalid-feedback">
-                    {% for error in form.dep_time.errors %}
-                        <span>{{ error }}</span>
-                    {% endfor %}
-                </div>dep_time
-            {% else %}
-                {{ form.dep_time(class="form-control form-control-lg") }}
-            {% endif %}
+                  {{ form.dep_time.label(class="form-control-label") }}
+                  {{ form.dep_time(class="form-control form-control-lg", placeholder="YYYY-MM-DD-HH-MM-SS") }}
         </div>
         <div class ='form-group'>
-          {{ form.arr_time.label(class="form-control-label") }}
-            {% if form.arr_time.errors %}
-                {{ form.arr_time(class="form-control form-control-lg is-invalid") }}
-                <div class="invalid-feedback">
-                    {% for error in form.arr_time.errors %}
-                        <span>{{ error }}</span>
-                    {% endfor %}
-                </div>
-            {% else %}
-                {{ form.arr_time(class="form-control form-control-lg") }}
-            {% endif %}
+                  {{ form.arr_time.label(class="form-control-label") }}
+                  {{ form.arr_time(class="form-control form-control-lg", placeholder="YYYY-MM-DD-HH-MM-SS") }}
         </div>
         <div class ='form-group'>
           {{ form.price.label(class="form-control-label") }}
-            {% if form.pricestatus.errors %}
-                {{ form.pricestatus(class="form-control form-control-lg is-invalid") }}
+            {% if form.price.errors %}
+                {{ form.price(class="form-control form-control-lg is-invalid") }}
                 <div class="invalid-feedback">
-                    {% for error in form.pricestatus.errors %}
+                    {% for error in form.price.errors %}
                         <span>{{ error }}</span>
                     {% endfor %}
                 </div>
