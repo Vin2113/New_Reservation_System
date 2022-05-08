@@ -115,6 +115,9 @@ class Airline_staff_RegistrationForm(FlaskForm):
             raise ValidationError('This email is taken. Please choose a different one.')
 
 
+class customerpurchaseForm(FlaskForm):
+    submit = SubmitField(label = 'Buy_ticket')
+
 
 class LoginForm(FlaskForm):
     email = StringField('Email',
@@ -124,15 +127,24 @@ class LoginForm(FlaskForm):
                            validators=[DataRequired()])
     remember = BooleanField('Remember Me')
     submit = SubmitField('Login')
+    
+    
+    
 
 class SearchForm(FlaskForm):
     depart = SelectField("Departure", choices =[],validate_choice=False)
     arrival = SelectField("Arrival", choices =[],validate_choice=False)
     time = StringField("Departure Date")
+    
+    
+    
 
 class statuscheckForm(FlaskForm):
     fnumber = StringField("Flight Number", validators=[DataRequired()])
     submit = SubmitField()
+    
+    
+    
 
 class Airline_staff_LoginForm(FlaskForm):
     name = StringField('Username',
@@ -145,6 +157,9 @@ class Airline_staff_LoginForm(FlaskForm):
 
     remember = BooleanField('Remember Me')
     submit = SubmitField('Login')
+    
+    
+    
 
 
 class Booking_agent_LoginForm(FlaskForm):

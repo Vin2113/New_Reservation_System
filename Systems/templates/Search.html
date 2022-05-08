@@ -1,5 +1,11 @@
 {% extends "Home.html" %}
 {% block searchres %}
+<style>
+    .table {
+      background-color: #FFFFF0;
+      color: black;
+    }
+  </style>
 <table class="table table-hover table-dark">
     <thead>
         <tr>
@@ -15,6 +21,7 @@
     </thead>
     <tbody>
             {% for i in res %}
+            {% include 'includes/popup.html'%}
             <tr>
                 <td>{{ i.airline_name }}</td>
                 <td>{{ i.departure_airport }}</td>
@@ -26,8 +33,8 @@
                 <td>{{ i.flight_num }}</td>
                 <td>
                     {% if session['loggedin'] == True %}
-                    <button class="btn btn-outline btn-info">More Info</button>
-                    <button class="btn btn-outline btn-success">Purchase</button>
+                    <button class="btn btn-outline btn-info" data-toggle ='modal' data-target='#Modal-Info-{{ i.flight_num }}'>More Info</button>
+                    <button class="btn btn-outline btn-success"data-toggle ='modal' data-target='#Modal-Purchase-{{ i.flight_num }}'>Purchase</button>
                     {% endif %}
                 </td>
             </tr>
