@@ -1,4 +1,10 @@
 {% extends "Layout.html" %} {% block content %}
+<!-- Chart.Js-->
+<script
+src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"
+integrity="sha256-ErZ09KkZnzjpqcane4SCyyHsKAXMvID9/xwbl/Aq1pc="
+crossorigin="anonymous"
+></script>
 <style>
   .table {
     background-color: #fffff0;
@@ -49,6 +55,15 @@
     var ctx = document.getElementById('6mbarchart').getContext('2d');
     var barchart = new Chart(ctx, {type:'bar', data: {labels: {{session['data']['label'] | safe}} , datasets:[{ label:'Spending', data: {{session['data']['ldata'] | safe}} , fill: true, backgroundColor: "rgba(195, 247, 72, 0.3)", borderColor:"rgba(124, 72, 247.0.9)",borderWidth: 1}]}});
   </script>
+<div class="row">
+  <div class="col-md">
+  <form method="post">
+    {{ form.dateone(class='form-control') }}
+    {{ form.datetwo(class='form-control') }}
+    {{ form.submit(class= 'btn btn-outline btn-secondary') }}
+  </form>
+</div>
+</div>
 </div>
 {% endblock %}
 
