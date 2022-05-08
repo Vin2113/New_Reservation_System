@@ -1,5 +1,5 @@
 from Reservation import app, bcrypt
-from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm, Staff_insert_airport_Form, Staff_grant_permission_Form, Staff_add_booking_agent_Form
+from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm, Staff_insert_airport_Form, Staff_grant_permission_Form, Staff_add_booking_agent_Form, Operator_Update_Flight_Form, add_flight_form
 from flask_login import login_user, current_user, logout_user, login_required
 from flask import render_template, flash, redirect, session, request, url_for
 import datetime
@@ -386,23 +386,33 @@ def add_booking_agent():
     if form.validate_on_submit():
         with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             str_email = str(form.email.data)
-            query = f"Select email from booking_agent_work_for where email = '{str_email}' and airline_name = 'Jet Blue'"
+            query = f"Insert into booking_agent_work_for Values('{str_email}', 'Jet Blue')"
             mycursor.execute(query)
-            data = mycursor.fetchall()
+            staff_connection.commit()
             mycursor.close()
-            if data:
-                flash('Login Unsuccessful, please check Email and Password.', 'danger')
-            else:
-                with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-                    str_email = str(form.email.data)
-                    query = f"Insert into booking_agent_work_for Values('{str_email}', 'Jet Blue')"
-                    mycursor.execute(query)
-                    staff_connection.commit()
-                    mycursor.close()
-                flash('Agent Added', 'success')
-                return redirect(url_for('home'))
+        flash('Agent Added', 'success')
+        return redirect(url_for('home'))
 
     return render_template('staff_add_booking_agent.html', form=form)
+
+# @app.route('/add_flight', methods=['GET', 'POST'])
+# def add_flight():
+#     form = add_flight_form()
+#     if form.validate_on_submit():
+
+#operater use case
+@app.route('/update_flight', methods=['GET', 'POST'])
+def update_flight():
+    form = Operator_Update_Flight_Form()
+    if form.validate_on_submit():
+        with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            str_flight_status = str(form.flight_status.data)
+            str_flight_num = str(form.flight_num.data)
+            query = f"UPDATE flight SET status = '{str_flight_status}' WHERE flight_num = '{str_flight_num}';"
+            mycursor.execute(query)
+            staff_connection.commit()
+            mycursor.close()
+
 
 
 
