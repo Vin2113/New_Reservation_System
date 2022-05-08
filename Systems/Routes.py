@@ -33,9 +33,48 @@ def scheck():
         session['status_search'] = status[0]['status']
     
     return render_template('statuscheck.html',title = 'statuscheck', form=form)
+
+
+@app.route('/profile', methods=["GET","POST"])
+def profile():
+    if(session['type']==None):
+        return redirect(url_for('home'))
+    if(session['type'] == 'customer'):
+        return redirect(url_for('profileCust',Username = session['username']))
+    if(session['type'] == 'agent'):
+        return redirect(url_for('profileAgent',Username = session['username']))
+    if(session['type'] == 'staff'):
+        return redirect(url_for('profileStf', Username = session['username']))
     
-        
-        
+
+@app.route('/profile/<Username>', methods=["GET","POST"])
+def profileCust(Username):
+    with connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            session.pop('history',None)
+            query = f"select F.airline_name, F.flight_num, F.departure_airport, F.departure_time, F.arrival_airport, F.arrival_time, F.price, F.status, F.airplane_id, T.ticket_id from flight as F right join ticket as T on F.flight_num=T.flight_num right join (select * from purchases where customer_email = '{session['username']}') as P on T.ticket_id = P.ticket_id"
+            mycursor.execute(query)
+            history = mycursor.fetchall()
+            session['history'] = history
+            mycursor.close()
+    return render_template('Profile.html', title='Profile')
+
+@app.route('/profileAgent/<Username>', methods=["GET","POST"])
+def profileAgent(Username):
+    session.pop('history',None)
+    return render_template('Profile.html', title='')
+        #with connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            #mycursor.execute("SELECT ")
+            #history = mycursor.fetchall()
+            #mycursor.close()
+
+
+@app.route('/profileStf/<Username>', methods=["GET","POST"])
+def profileStf(Username):
+    return render_template('Profile.html', title='')
+        #with connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            #mycursor.execute("SELECT ")
+            #history = mycursor.fetchall()
+            #mycursor.close()
         
 
 @app.route('/search', methods = ["POST"])
@@ -245,11 +284,13 @@ def logout():
     if session['type'] == 'customer':
         session.pop('loggedin', None)
         session.pop('status_search', None)
+        session.pop('history',None)
         session.pop('username', None)
         session.pop('password', None)
         session.pop('type', None)
     elif session['type'] == 'agent':
         session.pop('loggedin', None)
+        session.pop('history',None)
         session.pop('username', None)
         session.pop('password', None)
         session.pop('type', None)
@@ -266,20 +307,6 @@ def logout():
 
 # Redirect to login page
     return redirect(url_for('home'))
-
-@app.route('/customer_purchase', methods = ["GET", 'POST'])
-def purchase():
-    if session['loggedin'] == True and session['username'] != None:
-        #purchae and update
-        with customer_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-            query = 'Select max(ticket_id) from ticket'
-            mycursor.execute(query)
-            data = mycursor.fetchall()
-            print(data)
-            query = f"INSERT INTO ticket Values('{data[0]['max(ticket_id)'] + 1}','Jet Blue', 455)"
-            mycursor.execute(query)
-            customer_connection.commit()
-            mycursor.close()
 
 @app.route('/customer_profile', methods = ['GET', 'POST'])
 def customer_account():
