@@ -191,9 +191,11 @@ def staff_register():
         #insert into database
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         username = str(form.username.data)
-        dob_time = datetime.datetime(int(form.date_of_birth.data[-4:-1]), int(form.date_of_birth.data[0:2]),
-                                     int(form.date_of_birth.data[3:5]))
-        query = f"Insert INTO airline_staff VALUES('{username}', '{hashed_password}','{form.first_name.data}','{form.last_name.data}', {dob_time}, '{form.airline_name.data}',)"
+        dob_time = form.date_of_birth.data
+        first_name = str(form.first_name.data)
+        last_name = str(form.last_name.data)
+        airline_name = str(form.airline_name.data)
+        query = f"Insert INTO airline_staff VALUES('{username}', '{hashed_password}','{first_name}','{last_name}', '{dob_time}', '{airline_name}')"
         my_cursor = connection.cursor()
         my_cursor.execute(query)
         connection.commit()
@@ -250,32 +252,32 @@ def agent_login():
 def staff_login():
     form = Airline_staff_LoginForm()
     if form.validate_on_submit():
-        str_username = str(form.name.data)
-        query = f"SELECT username, password, airline_name From airline_staff  WHERE username = '{str_username}'"
-        my_cursor = connection.cursor()
-        my_cursor.execute(query)
-        account = my_cursor.fetchone()
-        my_cursor.close()
-        # checking user data from database for verification
-        if account != None and account[0] != str_username and bcrypt.check_password_hash(account[1], form.password.data):
-            session['type'] = 'staff'
-            session['loggedin'] = True
-            session['username'] = account[0]
-            session['password'] = account[1]
-            session['airline'] = account[2]
-            flash('Login Successful', 'success')
-            with staff_connection.cursor() as mycursor:
-                query = f"SELECT permission_type From permission WHERE username = {str_username}"
+        with staff_connection.cursor() as mycursor:
+            str_username = str(form.username.data)
+            str_airline_name = str(form.airline_name.data)
+            query = f"SELECT username, password From airline_staff  WHERE username = '{str_username}' and airline_name = '{str_airline_name}'"
+            mycursor.execute(query)
+            account = mycursor.fetchone()
+            # checking user data from database for verification
+            if account[0] == str_username and bcrypt.check_password_hash(account[1], form.password.data):
+                query = f"SELECT permission_type From permission WHERE username = '{str_username}'"
                 mycursor.execute(query)
                 data = mycursor.fetchall()
                 for i in data:
-                    if i == "Admin":
+                    if i[0] == "Admin":
                         session['Admin'] == True
-                    if i == "Operator":
+                    if i[0] == "Operator":
                         session['Operator'] == True
-            return redirect(url_for('staff_options'))
-        else:
-            flash('Login unsuccesful, please check Username, Password, and Airline_name.', 'danger')
+                session['type'] = 'staff'
+                session['loggedin'] = True
+                session['username'] = account[0]
+                session['password'] = account[1]
+                session['airline'] = str_airline_name
+                flash('Login Successful', 'success')
+                mycursor.close()
+                return redirect(url_for('staff_profile'))
+            else:
+                flash('Login unsuccesful, please check Username, Password, and Airline_name.', 'danger')
     return render_template('Staff_login.html', title='Login', form=form)
 
 
@@ -378,16 +380,8 @@ def staff_profile():
 
     # Most Frequent customer
     #query_5 = f"Select customer_email, count(ticket_id) From ticket natural join purchases Where airline_name = '{session['airline_name']}' group by customer_email Limit 1;"
-
-
     #Admin Queries
-    #New Airplane
-
-    query_5 = f"Insert into airplane Values('{session['airline_name']}', airplane_id, seats)"
-
-    #Insert flight into flights
-    query_6 =f"Insert into flight Values('{session['airline_name']}', flight_number, departure_airport, departure_time, arrival_airport, arrival_time, price, status, airplane_id)"
-
+    render_template('staff_profile.html')
 @app.route('/admin_insert_airport', methods=['GET', 'POST'])
 def admin_insert_airport():
     form = Staff_insert_airport_Form()
@@ -425,12 +419,25 @@ def grant_permission():
         with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             str_username = str(form.username.data)
             str_status = str(form.status.data)
-            query = f"Insert into permission Values('{str_username}', '{str_status}')"
+            query = f"Select username from airline_staff where username = '{str_username}' and airline_name = 'Jet Blue'"
             mycursor.execute(query)
-            staff_connection.commit()
-            mycursor.close()
-        flash('Permission Granted', 'success')
-        # return redirect(url_for('home'))
+            data = mycursor.fetchone()
+            if data is None:
+                flash('User is not a staff, Pleas type in the right username', 'danger')
+            else:
+                query = f"Select username from permission where username = '{str_username}' AND permission_type = '{str_status}'"
+                mycursor.execute(query)
+                data = mycursor.fetchall()
+                mycursor.close()
+                if data:
+                    flash('User already have this permission')
+                else:
+                    query = f"Insert into permission Values('{str_username}', '{str_status}')"
+                    mycursor.execute(query)
+                    staff_connection.commit()
+                mycursor.close()
+                flash('Permission Granted', 'success')
+                return redirect(url_for('home'))
     return render_template('staff_grant_permission.html', form=form)
 
 @app.route('/add_booking_agent', methods=['GET', 'POST'])
@@ -440,19 +447,50 @@ def add_booking_agent():
     if form.validate_on_submit():
         with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             str_email = str(form.email.data)
-            query = f"Insert into booking_agent_work_for Values('{str_email}', 'Jet Blue')"
+            query = f"Select email from booking_agent_work_for where email = '{str_email}' and airline_name =  'Jet Blue'"
             mycursor.execute(query)
-            staff_connection.commit()
+            data = mycursor.fetchone()
             mycursor.close()
-        flash('Agent Added', 'success')
-        return redirect(url_for('home'))
-
+            if data:
+                flash('Agent Already Added', 'success')
+            else:
+                with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+                    str_email = str(form.email.data)
+                    query = f"Insert into booking_agent_work_for Values('{str_email}', 'Jet Blue')"
+                    mycursor.execute(query)
+                    staff_connection.commit()
+                    mycursor.close()
+                flash('Agent Added', 'success')
+                return redirect(url_for('home'))
     return render_template('staff_add_booking_agent.html', form=form)
 
-# @app.route('/add_flight', methods=['GET', 'POST'])
-# def add_flight():
-#     form = add_flight_form()
-#     if form.validate_on_submit():
+@app.route('/add_flight', methods=['GET', 'POST'])
+def add_flight():
+    form = add_flight_form()
+    if form.validate_on_submit():
+        try:
+            with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+                query = f'Select Max(flight_num) as max_number from flight'
+                mycursor.excecute(query)
+                data = mycursor.fetchone()
+                new_flight_number = str(data['max_number'] + 1)
+                dep_time = datetime.datetime(int(form.dep_time.data[0:4]), int(form.dep_time.data[5:7]),
+                                             int(form.dep_time.data[8:10]), int(form.dep_time.data[11:13]),
+                                            int(form.dep_time.data[14:16]), int(form.dep_time.data[17:19]))
+                arr_time= datetime.datetime(int(form.arr_time.data[0:4]), int(form.arr_time.data[5:7]),
+                                             int(form.arr_time.data[8:10]), int(form.arr_time.data[11:13]),
+                                            int(form.arr_time.data[14:16]), int(form.arr_time.data[17:19]))
+                query = f"Insert into flight Values('Jet Blue', {new_flight_number}, '{form.dep_airport_name.data}','{form.arr_airport_name.data}','{dep_time}','{arr_time}','{form.price.data}','{form.status.data}','{form.airplane_id.data}'"
+                mycursor.execute(query)
+                staff_connection.commit()
+                mycursor.close()
+                flash('flight added', 'success')
+        except:
+            flash('error occured', 'danger')
+            return redirect(url_for('home'))
+
+    return render_template('add_flight.htlm', form = form)
+
 
 #operater use case
 @app.route('/update_flight', methods=['GET', 'POST'])
@@ -460,12 +498,23 @@ def update_flight():
     form = Operator_Update_Flight_Form()
     if form.validate_on_submit():
         with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-            str_flight_status = str(form.flight_status.data)
-            str_flight_num = str(form.flight_num.data)
-            query = f"UPDATE flight SET status = '{str_flight_status}' WHERE flight_num = '{str_flight_num}';"
+            str_flight_num = form.flight_num.data
+            query = f"Select flight_num from flight where flight_num = '{str_flight_num}'"
             mycursor.execute(query)
-            staff_connection.commit()
-            mycursor.close()
+            data = mycursor.fetchone()
+            if data is None:
+                flash('Flight is not found, type in the right flight number', 'danger')
+                mycursor.close()
+            else:
+                str_flight_status = str(form.flight_status.data)
+                str_flight_num = str(form.flight_num.data)
+                query = f"UPDATE flight SET status = '{str_flight_status}' WHERE flight_num = '{str_flight_num}';"
+                mycursor.execute(query)
+                staff_connection.commit()
+                mycursor.close()
+                return redirect(url_for('home'))
+
+    return render_template('staff_update_flight.html', form=form)
 
 
 
