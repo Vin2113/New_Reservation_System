@@ -588,13 +588,31 @@ def add_booking_agent():
 def add_flight():
     form = add_flight_form()
     if form.validate_on_submit():
+        if form.dep_time.data > form.arr_time_name.data:
+            flash("Check departure time", 'danger')
+            return redirect(url_for('add_flight'))
         with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            query = f"Select airport_name from airline_available_airports where airline_name = '{session['airline_name']}'"
+            mycursor.execute(query)
+            str_dep_airport = str(form.dep_airport_name.data)
+            str_arr_airport = str(form.arr_airport_name.data)
+            if str_arr_airport == str_dep_airport:
+                flash('Airports are the same', 'danger')
+            data = mycursor.fetchall()
+            lst = []
+            for i in data:
+                lst.append(i['airport_name'])
+            if str_dep_airport not in lst:
+                flash("Invalid Departure Airport", 'danger')
+                return redirect(url_for('add_flight'))
+            if str_arr_airport not in lst:
+                flash("Invalid Arrival Airport", 'danger')
+                return redirect(url_for('add_flight'))
             query = f'Select Max(flight_num) as max_number from flight'
             mycursor.execute(query)
             data = mycursor.fetchone()
             new_flight_number = str(data['max_number'] + 1)
-            str_dep_airport = str(form.dep_airport_name.data)
-            str_arr_airport = str(form.arr_airport_name.data)
+
             str_status = str(form.status.data)
             str_price = str(form.price.data)
             str_airplane_id = str(form.airplane_id.data)
