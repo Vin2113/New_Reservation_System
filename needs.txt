@@ -22,7 +22,7 @@ CUSTOMER:
 -Search for flights
 -Track spending
 	~total amount of money spent in past year
-	~bar chart shoing month wise money for last 6 months
+	~bar chart showing month wise money for last 6 months
 	~specify range of date to view total money spent within range and money spend within range
 -Log out
 
