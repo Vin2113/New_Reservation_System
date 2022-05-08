@@ -1,4 +1,4 @@
-Booking Agent View for most recent 30 day commissions and number of tickets
+#Booking Agent View for most recent 30 day commissions and number of tickets
 '''
 Create View booking_agent_view as
 Select sum(price * .1) as commissions, count(ticket_id) as tickets, avg(commissions) as avg_commissions
@@ -33,14 +33,14 @@ LIMIT 5;
 '''
 
 
-Check for booking agent( if a booking agent does not work for an airline, then they cannot purchase tickets)
+#Check for booking agent( if a booking agent does not work for an airline, then they cannot purchase tickets)
 Select email, count(airline_name)
 from booking_agent_work_for
 where email = {input_email}
 
 
 
-Checking Available Flights
+#Checking Available Flights
 Create view available_flights as
 select airline_name, airplane_id, departure_airport, departure_time, arrival_airport, arrival_time, price, status, T.flight_num, (seats-tickets_purchased) num_of_available_tickets
 from  (Select * From airplane natural join flight) as S

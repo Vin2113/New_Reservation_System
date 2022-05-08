@@ -1,3 +1,5 @@
+import nntplib
+from sre_constants import SUCCESS
 from Reservation import app, bcrypt
 from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, customerpurchaseForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm, Staff_insert_airport_Form, Staff_grant_permission_Form, Staff_add_booking_agent_Form, Operator_Update_Flight_Form, add_flight_form
 
@@ -55,7 +57,6 @@ def profileCust(Username):
             mycursor.execute(query)
             history = mycursor.fetchall()
             session['history'] = history
-            print(history)
             print(session['history'])
             mycursor.close()
     return render_template('Profile.html', title='Profile')
@@ -86,12 +87,28 @@ def search():
     if request.method == "POST":
         if purchaseform.submit.data == True:
             if (session['type'] == 'agent'):
-                return redirect(url_for(''))
+                data = {}
+                data['customeremail']=request.form.get('customeremail')
+                data['customerpass']=request.form.get('customerpass')
+                data['cusname']=request.form.get('cusname')
+                data['bnum']=request.form.get('bnum')
+                data['st']=request.form.get('st')
+                data['city']=request.form.get('city')
+                data['state']=request.form.get('state')
+                data['pnum']=request.form.get('pnum')
+                data['pasnum']=request.form.get('pasnum')
+                data['pexp']=request.form.get('pexp')
+                data['pcoun']=request.form.get('pcoun')
+                data['dob']=request.form.get('dob')
+                data['tairlinen']=request.form.get('tairlinen')
+                data['tfnum']=request.form.get('tfnum')
+                session['data'] = data
+                return redirect(url_for('purchaseagent', pdata=data))
             f_aln = request.form.get('tairlinen')
             f_num = request.form.get('tfnum')
 
             if session['loggedin'] == True and session['username'] != None:
-            #purchase and update
+                #purchase and update
                 with customer_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
                     query = 'Select max(ticket_id) from ticket'
                     mycursor.execute(query)
@@ -105,6 +122,7 @@ def search():
                     mycursor.execute(query)
                     customer_connection.commit()
                     mycursor.close()
+                flash(f'Ticket Purchased!', 'success')
                 return redirect(url_for('home'))
         depart = form.depart.data
         dest = form.arrival.data
@@ -146,10 +164,33 @@ def search():
         return render_template('Search.html', title='Home', form=form, res=res, purchaseform=purchaseform)
 
 
-@app.route('/purchaseagent/<data>')
-def purchaseagent(data):
-    pdata= data
-    print(data)
+@app.route('/purchaseagent/<pdata>')
+def purchaseagent(pdata):
+    with agent_connection.cursor(pymysql.cursors.DictCursor) as my_cursor:    
+        query = f"select email from customer where email = '{session['data']['customeremail']}'"
+        my_cursor.execute(query)
+        cust = my_cursor.fetchone()
+        hashed_password = bcrypt.generate_password_hash(session['data']['customerpass']).decode('utf-8')  
+        if cust is None:
+            expd = session['data']['pexp'].split('-')
+            expd = datetime.datetime(int(expd[0]),int(expd[1]),int(expd[2]))
+            dob = session['data']['dob'].split('-')
+            dob = datetime.datetime(int(dob[0]),int(dob[1]),int(dob[2]))
+            query = f"Insert INTO customer VALUES('{session['data']['customeremail']}','{session['data']['cusname']}','{hashed_password}','{session['data']['bnum']}','{session['data']['st']}','{session['data']['city']}','{session['data']['state']}', {int(session['data']['pnum'])} ,'{session['data']['pasnum']}', '{expd}' ,'{session['data']['pcoun']}','{dob}')"
+            my_cursor.execute(query)    
+        query = 'Select max(ticket_id) from ticket'
+        my_cursor.execute(query)
+        data = my_cursor.fetchall()
+        print(data)
+        tid = data[0]['max(ticket_id)'] + 1
+        query = f"INSERT INTO ticket Values('{tid}','{session['data']['tairlinen']}', {session['data']['tfnum']})"
+        my_cursor.execute(query)
+        query = f"INSERT INTO purchases Values('{tid}','{session['data']['customeremail']}', {session['id']} ,'{datetime.datetime.now()}')"
+        my_cursor.execute(query)
+        agent_connection.commit()
+        my_cursor.close()
+        session.pop('data',None)
+    flash(f"Ticket has been purchased!", 'success')
     return redirect(url_for('home'))
 
 @app.route('/register', methods=["GET", 'POST'])
@@ -242,12 +283,25 @@ def agent_login():
         my_cursor = connection.cursor()
         my_cursor.execute(query)
         account = my_cursor.fetchone()
+        query = f"Select email, airline_name from booking_agent_work_for where email = '{str_email}'"
+        my_cursor.execute(query)
+        aline=my_cursor.fetchall()
         # checking user data from database for verification
+        if (account == None):
+            flash('Login unsuccesful, please check Email, Password, and ID.', 'danger')
+            return redirect(url_for('home'))
         if account[0] == str_email and bcrypt.check_password_hash(account[1], form.password.data) and int(id) == account[2]:
+            data=[]
+            if(aline == None):
+                data.append('NONE')
+            for i in aline:
+                data.append(i[1])
             session['type'] = 'agent'
             session['loggedin'] = True
             session['username'] = account[0]
             session['password'] = account[1]
+            session['id'] = account[2]
+            session['alines'] = data
             flash('Login Successful', 'success')
             return redirect(url_for('home'))
         else:
@@ -302,6 +356,8 @@ def logout():
         session.pop('history',None)
         session.pop('username', None)
         session.pop('password', None)
+        session.pop('id', None)
+        session.pop('aline',None)
         session.pop('type', None)
     elif session['type'] == 'staff':
         session.pop('loggedin', None)

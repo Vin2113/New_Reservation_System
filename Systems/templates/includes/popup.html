@@ -21,7 +21,62 @@
           </button>
         </div>
         <div class="modal-body">
-          AIRLINE: {{ i.airline_name }}
+          Buy ticket?
+          <form method="POST">
+            {{ purchaseform.csrf_Token }}
+            {% if session['type'] == 'agent'%}
+            <label for='customeremil'> Customer Email:</label>
+
+            <input id="customeremail" class='form-control' name="customeremail" type="email" placeholder='Customer Email'>
+
+            <label for='customerpass'> Password:</label>
+
+            <input id="customerpass" class='form-control' name="customerpass" type="password" placeholder='Customer Email'>
+
+            <label for='cname'> Customer Name:</label>
+
+            <input id="cname" class='form-control' name="cusname" type="text" placeholder='Customer Name'>
+
+            <label for='bnum'> Building Number:</label>
+            <input id="bnum" class='form-control' name="bnum" type="text" placeholder='Building Number'>
+
+            <label for='st'> Street:</label>
+
+            <input id="st" class='form-control' name="st" type="text" placeholder='Street'>
+
+            <label for='city'> City: </label>
+
+            <input id="city" class='form-control' name="city" type="text" placeholder='City'>
+
+            <label for='state'> State:</label>
+
+            <input id="state" class='form-control' name="state" type="text" placeholder='State'>
+
+            <label for='pnum'> Phone Number:</label>
+
+            <input id="pnum" class='form-control' name="pnum" type="number" placeholder='Phone Number'>
+
+            <label for='pasnum'> Passport Number:</label>
+
+            <input id="pasnum" class='form-control' name="pasnum" type="text" placeholder='Passport Number'>
+
+            <label for='pexp'> Passport Expiry:</label>
+
+            <input id="pexp" class='form-control' name="pexp" type="date" placeholder='Passport Expiry'>
+
+            <label for='pcoun'> Passport Country</label>
+
+            <input id="pcoun" class='form-control' name="pcoun" type="text" placeholder='Passport Country'>
+
+            <label for='dob'> DOB</label>
+
+            <input id="dob" class='form-control' name="dob" type="date" placeholder='DOB'>
+
+            {% endif %}
+            <input id="tairlinen" name="tairlinen" type="hidden" value="{{ i.airline_name }}">
+            <input id="tfnum" name="tfnum" type="hidden" value="{{ i.flight_num }}">
+            {{ purchaseform.submit (class='btn btn-primary btn-block') }}
+        </form>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary"
@@ -53,11 +108,6 @@
             Buy this ticket for ${{ i.price }} ?
             </h4>
             <form method="POST">
-                {{ purchaseform.csrf_Token }}
-                {% if session['type'] == 'agent'%}
-                <label for='customeremil'> Customer Email </label>
-                <input id="customeremail" class='form-control' name="customeremail" type="text" placeholder='Customer Email'>
-                {% endif %}
                 <input id="tairlinen" name="tairlinen" type="hidden" value="{{ i.airline_name }}">
                 <input id="tfnum" name="tfnum" type="hidden" value="{{ i.flight_num }}">
                 {{ purchaseform.submit (class='btn btn-primary btn-block') }}
