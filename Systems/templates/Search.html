@@ -27,14 +27,20 @@
                 <td>{{ i.departure_airport }}</td>
                 <td>{{ i.departure_time }}</td>
                 <td>{{ i.arrival_airport }}</td>
-                <td>{{ i.airline_time }}</td>
+                <td>{{ i.arrival_time }}</td>
                 <td>{{ i.price }}</td>
                 <td>{{ i.status }}</td>
                 <td>{{ i.flight_num }}</td>
                 <td>
                     {% if session['loggedin'] == True %}
-                    <button class="btn btn-outline btn-info" data-toggle ='modal' data-target='#Modal-Info-{{ i.flight_num }}'>More Info</button>
+                    {% if session['type'] != 'agent'%}
                     <button class="btn btn-outline btn-success"data-toggle ='modal' data-target='#Modal-Purchase-{{ i.flight_num }}'>Purchase</button>
+                    {%endif%}
+                    {% if session['type'] =='agent'%}
+                    {% if i.airline_name in session['alines']%}
+                    <button class="btn btn-outline btn-success"data-toggle ='modal' data-target='#Modal-Info-{{ i.flight_num }}'>Purchase for Customer</button>
+                    {% endif %}
+                    {% endif %}
                     {% endif %}
                 </td>
             </tr>

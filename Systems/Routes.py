@@ -1,12 +1,21 @@
+import nntplib
+from sre_constants import SUCCESS
 from Reservation import app, bcrypt
 from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, customerpurchaseForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm, Staff_insert_airport_Form, Staff_grant_permission_Form, Staff_add_booking_agent_Form, Operator_Update_Flight_Form, add_flight_form
-
+from dateutil.rrule import rrule, MONTHLY
 from flask_login import login_user, current_user, logout_user, login_required
 from flask import render_template, flash, redirect, session, request, url_for
-import datetime
+from datetime import date,datetime
+from dateutil.relativedelta import relativedelta
 from model import connection,staff_connection,agent_connection,customer_connection
 import pymysql.cursors
 
+def monthspan(startDate, endDate, delta=relativedelta(months=1)):
+    currentDate = startDate
+    while currentDate > endDate:
+        yield currentDate
+        currentDate -= delta
+    
 
 @app.route('/')
 @app.route('/home',methods=["GET","POST"])
@@ -50,14 +59,57 @@ def profile():
 
 @app.route('/profile/<Username>', methods=["GET","POST"])
 def profileCust(Username):
-    with connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-            session.pop('history',None)
+    session.pop('data',None)
+    data={}
+    with customer_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             query = f"select F.airline_name, F.flight_num, F.departure_airport, F.departure_time, F.arrival_airport, F.arrival_time, F.price, F.status, F.airplane_id, T.ticket_id from flight as F right join ticket as T on F.flight_num=T.flight_num right join (select * from purchases where customer_email = '{session['username']}') as P on T.ticket_id = P.ticket_id"
             mycursor.execute(query)
             history = mycursor.fetchall()
-            session['history'] = history
+            data['history'] = history
+            query = f"select sum(F.price) from flight as F left join ticket as T on T.flight_num = F.flight_num left join purchases as P on T.ticket_id = P.ticket_id where P.customer_email = '{session['username']}' and p.purchase_date > date_sub(curdate(), INTERVAL 1 Year)"
+            mycursor.execute(query)
+            soney = mycursor.fetchone()
+            data['oneyear'] = soney
+            query = f"select monthname(P.purchase_date) as month, year(P.purchase_date) as year, sum(F.price) as spending from flight as F left join ticket as T on F.flight_num = T.flight_num right join purchases as P on T.ticket_id = P.ticket_id  where P.customer_email = '{session['username']}' and p.purchase_date > date_sub(curdate(), INTERVAL 6 month) group by month(P.purchase_date)"
+            mycursor.execute(query)
+            mdata= mycursor.fetchall()
+            data['mdata'] = mdata
             mycursor.close()
+    now = datetime.now()
+    sixm = now - relativedelta(months=6)
+    label = []
+    ldata = []
+    span=[]
+    dataspan= []
+    datamod = []
+    for t in monthspan(now, sixm):
+        temp = t.strftime("%Y")+ ", " +t.strftime("%B")
+        span.append(temp)    
+    for d in data['mdata']:
+        datamod.append({'months':str(d['year'])+", " + d['month'], 'value':int(d['spending'])})
+        dataspan.append(str(d['year'])+", " + d['month'])
+    print(datamod)
+    for x in span:
+        if x not in dataspan:
+            label.append(x)
+            ldata.append(0)
+        else:
+            for y in datamod:
+                if y['months'] == x:
+                    label.append(x)
+                    ldata.append(y['value'])
+    print(label)
+    print(ldata)
+    data['label'] = label
+    data['ldata'] = ldata
+    session['data'] = data
+    #session['span'] 
+    
     return render_template('Profile.html', title='Profile')
+
+
+
+
 
 @app.route('/profileAgent/<Username>', methods=["GET","POST"])
 def profileAgent(Username):
@@ -84,12 +136,29 @@ def search():
     purchaseform=customerpurchaseForm()
     if request.method == "POST":
         if purchaseform.submit.data == True:
+            if (session['type'] == 'agent'):
+                data = {}
+                data['customeremail']=request.form.get('customeremail')
+                data['customerpass']=request.form.get('customerpass')
+                data['cusname']=request.form.get('cusname')
+                data['bnum']=request.form.get('bnum')
+                data['st']=request.form.get('st')
+                data['city']=request.form.get('city')
+                data['state']=request.form.get('state')
+                data['pnum']=request.form.get('pnum')
+                data['pasnum']=request.form.get('pasnum')
+                data['pexp']=request.form.get('pexp')
+                data['pcoun']=request.form.get('pcoun')
+                data['dob']=request.form.get('dob')
+                data['tairlinen']=request.form.get('tairlinen')
+                data['tfnum']=request.form.get('tfnum')
+                session['data'] = data
+                return redirect(url_for('purchaseagent', pdata=data))
             f_aln = request.form.get('tairlinen')
             f_num = request.form.get('tfnum')
 
-            
             if session['loggedin'] == True and session['username'] != None:
-            #purchase and update
+                #purchase and update
                 with customer_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
                     query = 'Select max(ticket_id) from ticket'
                     mycursor.execute(query)
@@ -99,10 +168,11 @@ def search():
                     query = f"INSERT INTO ticket Values('{tid}','{f_aln}', {f_num})"
                     mycursor.execute(query)
                     customer_connection.commit()
-                    query = f"INSERT INTO purchases Values('{tid}','{session['username']}', NULL ,'{datetime.datetime.now()}')"
+                    query = f"INSERT INTO purchases Values('{tid}','{session['username']}', NULL ,'{datetime.now()}')"
                     mycursor.execute(query)
                     customer_connection.commit()
                     mycursor.close()
+                flash(f'Ticket Purchased!', 'success')
                 return redirect(url_for('home'))
         depart = form.depart.data
         dest = form.arrival.data
@@ -113,7 +183,7 @@ def search():
             time = dateandtime[1].strip()
             date = date.split('/')
             time= time.split(':')
-            dateandtime = datetime.datetime(int(date[2]),int(date[0]),int(date[1]),int(time[0]),int(time[1]))
+            dateandtime = datetime(int(date[2]),int(date[0]),int(date[1]),int(time[0]),int(time[1]))
             dateandtime = '\'' + str(dateandtime) + '\''
         else:
             dateandtime = "departure_time"
@@ -143,6 +213,35 @@ def search():
                 
         return render_template('Search.html', title='Home', form=form, res=res, purchaseform=purchaseform)
 
+
+@app.route('/purchaseagent/<pdata>')
+def purchaseagent(pdata):
+    with agent_connection.cursor(pymysql.cursors.DictCursor) as my_cursor:    
+        query = f"select email from customer where email = '{session['data']['customeremail']}'"
+        my_cursor.execute(query)
+        cust = my_cursor.fetchone()
+        hashed_password = bcrypt.generate_password_hash(session['data']['customerpass']).decode('utf-8')  
+        if cust is None:
+            expd = session['data']['pexp'].split('-')
+            expd = datetime(int(expd[0]),int(expd[1]),int(expd[2]))
+            dob = session['data']['dob'].split('-')
+            dob = datetime(int(dob[0]),int(dob[1]),int(dob[2]))
+            query = f"Insert INTO customer VALUES('{session['data']['customeremail']}','{session['data']['cusname']}','{hashed_password}','{session['data']['bnum']}','{session['data']['st']}','{session['data']['city']}','{session['data']['state']}', {int(session['data']['pnum'])} ,'{session['data']['pasnum']}', '{expd}' ,'{session['data']['pcoun']}','{dob}')"
+            my_cursor.execute(query)    
+        query = 'Select max(ticket_id) from ticket'
+        my_cursor.execute(query)
+        data = my_cursor.fetchall()
+        print(data)
+        tid = data[0]['max(ticket_id)'] + 1
+        query = f"INSERT INTO ticket Values('{tid}','{session['data']['tairlinen']}', {session['data']['tfnum']})"
+        my_cursor.execute(query)
+        query = f"INSERT INTO purchases Values('{tid}','{session['data']['customeremail']}', {session['id']} ,'{datetime.now()}')"
+        my_cursor.execute(query)
+        agent_connection.commit()
+        my_cursor.close()
+        session.pop('data',None)
+    flash(f"Ticket has been purchased!", 'success')
+    return redirect(url_for('home'))
 
 @app.route('/register', methods=["GET", 'POST'])
 def register():
@@ -236,12 +335,25 @@ def agent_login():
         my_cursor = connection.cursor()
         my_cursor.execute(query)
         account = my_cursor.fetchone()
+        query = f"Select email, airline_name from booking_agent_work_for where email = '{str_email}'"
+        my_cursor.execute(query)
+        aline=my_cursor.fetchall()
         # checking user data from database for verification
+        if (account == None):
+            flash('Login unsuccesful, please check Email, Password, and ID.', 'danger')
+            return redirect(url_for('home'))
         if account[0] == str_email and bcrypt.check_password_hash(account[1], form.password.data) and int(id) == account[2]:
+            data=[]
+            if(aline == None):
+                data.append('NONE')
+            for i in aline:
+                data.append(i[1])
             session['type'] = 'agent'
             session['loggedin'] = True
             session['username'] = account[0]
             session['password'] = account[1]
+            session['id'] = account[2]
+            session['alines'] = data
             flash('Login Successful', 'success')
             return redirect(url_for('home'))
         else:
@@ -290,12 +402,16 @@ def logout():
         session.pop('history',None)
         session.pop('username', None)
         session.pop('password', None)
+        session.pop('data',None)
         session.pop('type', None)
     elif session['type'] == 'agent':
         session.pop('loggedin', None)
         session.pop('history',None)
         session.pop('username', None)
         session.pop('password', None)
+        session.pop('id', None)
+        session.pop('data',None)
+        session.pop('aline',None)
         session.pop('type', None)
     elif session['type'] == 'staff':
         session.pop('loggedin', None)
