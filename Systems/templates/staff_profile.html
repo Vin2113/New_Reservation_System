@@ -1,9 +1,7 @@
-
-
 {% extends "Layout.html" %} {% block content %}
 <div class="container">
   <div class="row">
-    <div class="col=md-8">
+    <div class="col-md-8">
       <table class="table table-hover table-dark">
         <thead>
           <tr>
@@ -58,6 +56,15 @@
       <a class="nav-item nav-link" href="{{ url_for('top_destination_1year') }}"
                 >Top Destination 1 Year</a>
     </div>
+      <div class="row">
+        <div class="col-md">
+        <form method="post">
+          {{ form.dateone(class='form-control') }}
+          {{ form.datetwo(class='form-control') }}
+          {{ form.submit(class= 'btn btn-outline btn-secondary') }}
+        </form>
+      </div>
+    </div>
     <div class="col-md-2">
       {% if session['Admin'] %}
       <a
@@ -86,7 +93,6 @@
         >update_flight</a
       >
       {% endif %}
-    </div>
 </div>
 
 {% endblock content %}

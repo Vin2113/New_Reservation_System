@@ -1,18 +1,4 @@
 PUBLIC:
-- Search for upcoming flights
-	~Source city/airport
-	~Destination city/airport
-	~Date
--See flight status
-	~flight number
-	~arrival/departure date
--Register
-	~Customer
-	~Booking agent
-	~Airline Staff
--Login
-	~If login Successful, session start
-	~Else show error msg
 
 ========================================================================================
 
@@ -24,13 +10,8 @@ BOOKING AGENT: DONE!
 
 ============================================================================================
 STAFF:
--View all booking agents
-	~Top 5 agents based on number of tickets past month and year
-	~Top 5 agents based on amount of commission recived
 -View reports
 	~Total number of tickets sold based on range of dates/last year/ last month
 	~Month wise tickets in a bar chart
--View Top Destinations
-	~ find top 3 most popular dest in 3 months and last year
 
 -Log out
