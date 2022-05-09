@@ -1,9 +1,7 @@
-
-
 {% extends "Layout.html" %} {% block content %}
 <div class="container">
   <div class="row">
-    <div class="col=md-8">
+    <div class="col-md-8">
       <table class="table table-hover table-dark">
         <thead>
           <tr>
@@ -45,14 +43,21 @@
         var ctx = document.getElementById('donut1y').getContext('2d');
         var barchart = new Chart(ctx, {type:'doughnut', data: {labels:['Direct(1 YEAR)', 'Indirect(1 YEAR)'] , datasets:[{ label:'Revenue', data: [{{staffdata['directy']['total'] | safe}},{{staffdata['indirecty']['total'] | safe}}] , fill: true, backgroundColor: ["rgba(195, 247, 72)","rgba(124, 72, 247)"],hoverOffset: 4}]}});
       </script>
-    </div>
-    <div class="container">
-      <a class="nav-item nav-link" href="{{ url_for('top_agent_by_sales') }}"
+      <a class="btn btn-outline-primary" href="{{ url_for('top_agent_by_sales') }}"
                 >View Top Agent by Sales</a>
-      <a class="nav-item nav-link" href="{{ url_for('top_agent_by_commissions') }}"
+      <a class="btn btn-outline-primary" href="{{ url_for('top_agent_by_commissions') }}"
                 >View Top Agent by Commissions</a>
-      <a class="nav-item nav-link" href="{{ url_for('top_destination') }}"
+      <a class="btn btn-outline-primary" href="{{ url_for('top_destination') }}"
                 >Top Destination</a>
+    </div>
+      <div class="row">
+        <div class="col-md">
+        <form method="post">
+          {{ form.dateone(class='form-control') }}
+          {{ form.datetwo(class='form-control') }}
+          {{ form.submit(class= 'btn btn-outline btn-secondary') }}
+        </form>
+      </div>
     </div>
     <div class="col-md-2">
       {% if session['Admin'] %}
@@ -82,7 +87,6 @@
         >update_flight</a
       >
       {% endif %}
-    </div>
 </div>
 
 {% endblock content %}

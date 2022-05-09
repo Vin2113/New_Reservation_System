@@ -1,0 +1,13 @@
+{% extends "Layout.html" %} {% block content %}
+<div class="container">
+<div class="row">
+<div class="col-md">
+<canvas id="barg" width="800" height="400"></canvas>
+      <script>
+        var ctx = document.getElementById('barg').getContext('2d');
+        var barchart = new Chart(ctx, {type:'bar', data: {labels:{{ label | safe }} , datasets:[{ label:'Sales', data: {{ldata | safe }} , fill: true, backgroundColor: "rgba(195, 247, 72, 0.3)", borderColor:"rgba(124, 72, 247,0.9)",borderWidth: 1}]}});
+      </script>
+    </div>
+</div>
+</div>
+{% endblock %}

@@ -49,11 +49,11 @@ def profile():
     if(session['type']==None):
         return redirect(url_for('home'))
     if(session['type'] == 'customer'):
-        return redirect(url_for('profileCust',username = session['username']))
+        return redirect(url_for('profileCust',Username = session['username']))
     if(session['type'] == 'agent'):
-        return redirect(url_for('profileAgent',username = session['username']))
+        return redirect(url_for('agent_account',username=session['username']))
     if(session['type'] == 'staff'):
-        return redirect(url_for('profileStf', username = session['username']))
+        return redirect(url_for('staff_profile', username=session['username']))
     
 
 @app.route('/profile/<Username>', methods=["GET","POST"])
@@ -337,8 +337,7 @@ def login():
     if form.validate_on_submit():
         str_email = str(form.email.data)
         query = f"SELECT email, password from customer WHERE email = '{str_email}'"
-        with connection.cursor as my_cursor:
-            my_cursor = connection.cursor()
+        with customer_connection.cursor() as my_cursor:
             my_cursor.execute(query)
             account = my_cursor.fetchone()
         #checking user data from database for verification
@@ -424,6 +423,8 @@ def staff_login():
                 flash('Login Successful', 'success')
                 mycursor.close()
                 return redirect(url_for('home'))
+            else:
+                flash('Login Unsuccesful, please check Email and Password.', 'danger')
     return render_template('Staff_login.html', title='Login', form=form)
 
 
@@ -452,9 +453,10 @@ def logout():
         session.pop('loggedin', None)
         session.pop('username', None)
         session.pop('password', None)
-        session.pop('airline', None)
+        session.pop('airline_name', None)
         session.pop('type', None)
         session.pop('Admin', None)
+        session.pop('dates',None)
         session.pop('Operator', None)
 
 # Redirect to login page
@@ -543,6 +545,8 @@ def agent_account(username):
 @app.route('/staff_profile/<username>', methods = ['GET', 'POST'])
 def staff_profile(username):
     staffdata={}
+    session['dates'] = None
+    form = rangeForm()
     with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
         query = f"SELECT * From flight WHERE airline_name = '{session['airline_name']}'"
         mycursor.execute(query)
@@ -566,7 +570,50 @@ def staff_profile(username):
         mycursor.execute(query)
         indirecty = mycursor.fetchone()
         staffdata['indirecty'] = indirecty
-    return render_template('staff_profile.html', title = session['username'], staffdata=staffdata)
+    if request.method=="POST":
+        datef = form.dateone.data
+        dates = form.datetwo.data
+        return redirect(url_for('staffcharts',datef = datef, dates=dates))
+    
+    return render_template('staff_profile.html', title = session['username'],form = form, staffdata=staffdata)
+
+@app.route('/staffchartrange/<datef>to<dates>', methods = ['GET', 'POST'])
+def staffcharts(datef, dates):
+    print(datef)
+    print(dates)
+    datef = datef.split('-')
+    dates = dates.split('-')
+    datef = datetime(int(datef[0]), int(datef[1]), int(datef[2]))
+    dates = datetime(int(dates[0]), int(dates[1]), int(dates[2]))
+    with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+        query = f"select monthname(purchase_date) as month, year(purchase_date) as year, count(purchases.ticket_id) as sales from purchases join ticket natural join flight where flight.airline_name = '{session['airline_name']}' and purchase_date <= '{datef}' AND purchase_date >='{dates}'group by month(purchase_date),year(purchase_date)"
+        mycursor.execute(query)
+        numbers= mycursor.fetchall()
+        print(numbers)
+    label = []
+    ldata = []
+    span=[]
+    dataspan= []
+    datamod = []
+    for t in monthspan(datef, dates):
+        temp = t.strftime("%Y")+ ", " +t.strftime("%B")
+        span.append(temp)    
+    for d in numbers:
+        datamod.append({'months':str(d['year'])+", " + d['month'], 'value':int(d['sales'])})
+        dataspan.append(str(d['year'])+", " + d['month'])
+    print(datamod)
+    for x in span:
+        if x not in dataspan:
+            label.append(x)
+            ldata.append(0)
+        else:
+            for y in datamod:
+                if y['months'] == x:
+                    label.append(x)
+                    ldata.append(y['value'])
+    print(label)
+    print(ldata)
+    return render_template('staff_charts.html', title = session['username'] +'chart', label =label, ldata=ldata)
 
 
 #view all customer of particular
@@ -668,7 +715,7 @@ def admin_insert_airport():
             mycursor.close()
             #Search for customer on a flight
         flash('Added Airport', 'success')
-        return redirect(url_for('staff_profile'))
+        return redirect(url_for('staff_profile', username=session['username']))
     return render_template('insert_airport.html', form=form)
 
 @app.route('/admin_grant_permission', methods=['GET', 'POST'])
@@ -696,7 +743,7 @@ def grant_permission():
                     staff_connection.commit()
                 mycursor.close()
                 flash('Permission Granted', 'success')
-                return redirect(url_for('staff_profile'))
+                return redirect(url_for('staff_profile', username=session['username']))
     return render_template('staff_grant_permission.html', form=form)
 
 @app.route('/add_booking_agent', methods=['GET', 'POST'])
@@ -720,7 +767,7 @@ def add_booking_agent():
                     staff_connection.commit()
                     mycursor.close()
                 flash('Agent Added', 'success')
-                return redirect(url_for('staff_profile'))
+                return redirect(url_for('staff_profile', username=session['username']))
     return render_template('staff_add_booking_agent.html', form=form)
 
 @app.route('/add_flight', methods=['GET', 'POST'])
@@ -762,7 +809,7 @@ def add_flight():
             staff_connection.commit()
             mycursor.close()
             flash('flight added', 'success')
-            return redirect(url_for('staff_profile'))
+            return redirect(url_for('staff_profile', username=session['username']))
 
         flash('unSuccesful', 'danger')
         return redirect(url_for('add_flight'))
