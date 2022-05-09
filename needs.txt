@@ -16,64 +16,21 @@ PUBLIC:
 
 ========================================================================================
 
-CUSTOMER:
--View my flights
--Purchase Ticket
--Search for flights
--Track spending
-	~total amount of money spent in past year
-	~bar chart showing month wise money for last 6 months
-	~specify range of date to view total money spent within range and money spend within range
--Log out
+CUSTOMER: DONE!
 
 ==========================================================================================
 
-BOOKING AGENT:
--View my flights
-	~see flight information which was purchased for customers
--Purchase tickets
-	~purchase for customers giving info, only purchase for airline they work for
--Search for flights
--View my commission
-	~Total amount of commission they recived in the past 30 days
-	~average commission per ticket (30days)
-	~specify range of dates to see commission and total number of tickets sold
--View top customers
-	~top 5 customers based on number of tickets bought during 6 months
-	~top 5 based on commission recived in last year
-	~bar char of each of 5 customers in c and tickets in y
-	~bar chart of 5 customers in x and tickets sold
--Logout
+BOOKING AGENT: DONE!
 
 ============================================================================================
 STAFF:
--View all flights by Airline
-	~view all flights in range for airline
--Create new flight
-	~ADMIN ONLY
--Change status of flight
-	~OPERATOR ONLY
--Add airplane in system
-	~ADMIN ONLY
--Add new airport to system
-	~ADMIN ONLY
 -View all booking agents
 	~Top 5 agents based on number of tickets past month and year
 	~Top 5 agents based on amount of commission recived
--View frequent Customers
-	~see most frequent customers within last year
 -View reports
 	~Total number of tickets sold based on range of dates/last year/ last month
 	~Month wise tickets in a bar chart
--Comparison of Revenue earned
-	~Pie chart of total revenue earned from direcct sales
-	~VS indirect sales
-	~last month and last year
 -View Top Destinations
 	~ find top 3 most popular dest in 3 months and last year
--Grant new perms
-	~ONLY  ADMIN
--Add booking agents
-	~provide email, add agents to airline
-	~agents cant work for anyone until staff adds
+
 -Log out
