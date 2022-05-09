@@ -1,4 +1,5 @@
 
+
 {% extends "Layout.html" %} {% block content %}
 <div class="container">
   <div class="row">
@@ -45,6 +46,14 @@
         var barchart = new Chart(ctx, {type:'doughnut', data: {labels:['Direct(1 YEAR)', 'Indirect(1 YEAR)'] , datasets:[{ label:'Revenue', data: [{{staffdata['directy']['total'] | safe}},{{staffdata['indirecty']['total'] | safe}}] , fill: true, backgroundColor: ["rgba(195, 247, 72)","rgba(124, 72, 247)"],hoverOffset: 4}]}});
       </script>
     </div>
+    <div class="container">
+      <a class="nav-item nav-link" href="{{ url_for('top_agent_by_sales') }}"
+                >View Top Agent by Sales</a>
+      <a class="nav-item nav-link" href="{{ url_for('top_agent_by_commissions') }}"
+                >View Top Agent by Commissions</a>
+      <a class="nav-item nav-link" href="{{ url_for('top_destination') }}"
+                >Top Destination</a>
+    </div>
     <div class="col-md-2">
       {% if session['Admin'] %}
       <a
@@ -74,7 +83,6 @@
       >
       {% endif %}
     </div>
-  </div>
 </div>
 
 {% endblock content %}

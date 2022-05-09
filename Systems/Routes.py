@@ -49,11 +49,11 @@ def profile():
     if(session['type']==None):
         return redirect(url_for('home'))
     if(session['type'] == 'customer'):
-        return redirect(url_for('profileCust',Username = session['username']))
+        return redirect(url_for('profileCust',username = session['username']))
     if(session['type'] == 'agent'):
-        return redirect(url_for('agent_account',username=session['username']))
+        return redirect(url_for('profileAgent',username = session['username']))
     if(session['type'] == 'staff'):
-        return redirect(url_for('staff_profile', username=session['username']))
+        return redirect(url_for('profileStf', username = session['username']))
     
 
 @app.route('/profile/<Username>', methods=["GET","POST"])
@@ -152,8 +152,6 @@ def rangesearch(username,datef,dates):
     print(label)
     print(ldata)
     return render_template('Crangesearch.html', title='Rangesearch', label=label, ldata=ldata, sumoney = sumoney)
-
-        
 
 @app.route('/search', methods = ["POST"])
 def search():
@@ -402,7 +400,9 @@ def staff_login():
             mycursor.execute(query)
             account = mycursor.fetchone()
             # checking user data from database for verification
-            if account[0] == str_username and bcrypt.check_password_hash(account[1], form.password.data):
+            if account is None:
+                flash('Login unsuccesful, please check Username, Password, and Airline_name.', 'danger')
+            elif account[0] == str_username and bcrypt.check_password_hash(account[1], form.password.data):
                 query = f"SELECT permission_type From permission WHERE username = '{str_username}'"
                 mycursor.execute(query)
                 data = mycursor.fetchall()
@@ -418,9 +418,7 @@ def staff_login():
                 session['airline_name'] = str_airline_name
                 flash('Login Successful', 'success')
                 mycursor.close()
-                return redirect(url_for('staff_profile', username=session['username']))
-            else:
-                flash('Login unsuccesful, please check Username, Password, and Airline_name.', 'danger')
+                return redirect(url_for('home'))
     return render_template('Staff_login.html', title='Login', form=form)
 
 
@@ -564,8 +562,7 @@ def staff_profile(username):
         indirecty = mycursor.fetchone()
         staffdata['indirecty'] = indirecty
     return render_template('staff_profile.html', title = session['username'], staffdata=staffdata)
-# View upcoming flights within the staffs airline by status
-#query_1 = f"SELECT * From flight WHERE airline_name = '{session['airline_name']}' and status = 'upcoming'"
+
 
 #view all customer of particular
 #query_2 = f"Select customer_email From ticket natural join purchases Where airline_name = '{session['airline_name']}' and flight_num = '{input_flight_num}'
@@ -577,9 +574,69 @@ def staff_profile(username):
 #Amount of tickets sold in a month
 #query_4 = f"Select count(ticket_id) From ticket natural join purchases Where airline_name = session[airline_name] group by customer_email Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and airline_name = {airline_name}; Limit 1;"
 
-# Most Frequent customer
-#query_5 = f"Select customer_email, count(ticket_id) From ticket natural join purchases Where airline_name = '{session['airline_name']}' group by customer_email Limit 1;"
-#Admin Queries
+@app.route('/top_agent_by_sales', methods=['GET', 'POST'])
+def top_agent_by_sales():
+    session.pop('data', None)
+    idata = {}
+    with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+        query = f"Select email, count(ticket_id) as sales from (select email, booking_agent_id from booking_agent natural join booking_agent_work_for where airline_name = '{session['airline_name']}') as T join purchases on T.booking_agent_id = purchases.booking_agent_id natural join ticket natural join flight  Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) group by email order by sales DESC Limit 5"
+        mycursor.execute(query)
+        data = mycursor.fetchall()
+        session['data'] = data
+        email = []
+        sales = []
+        for i in data:
+            email.append(i['email'])
+            sales.append(i['sales'])
+        idata['agent_emails'] = email
+        idata['agent_sales'] = sales
+        idata['data'] = data
+    session['data'] = idata
+
+    return render_template('top_agent_by_sales.html')
+
+
+@app.route('/top_agent_by_commissions', methods=['GET', 'POST'])
+def top_agent_by_commissions():
+    session.pop('data', None)
+    idata = {}
+    with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+        query = f"Select email, sum(price * .1) as commissions from (select email, booking_agent_id from booking_agent natural join booking_agent_work_for where airline_name = '{session['airline_name']}') as T join purchases on T.booking_agent_id = purchases.booking_agent_id natural join ticket natural join flight  Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) group by email order by commissions DESC Limit 5"
+        mycursor.execute(query)
+        data = mycursor.fetchall()
+        session['data'] = data
+        email = []
+        commissions = []
+        for i in data:
+            email.append(i['email'])
+            commissions.append(float(i['commissions']))
+        idata['agent_emails'] = email
+        idata['agent_commissions'] = commissions
+        idata['data'] = data
+    session['data'] = idata
+
+    return render_template('top_agent_by_commissions.html')
+
+@app.route('/top_destination', methods=['GET', 'POST'])
+def top_destination():
+    session.pop('data', None)
+    idata = {}
+    with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+        query = f"SELECT arrival_airport as destination, count(ticket_id) as count FROM purchases natural join flight Where purchase_date > Date_Sub(curdate(), INTERVAL 1 YEAR) and airline_name = '{session['airline_name']}' group by arrival_airport order by count(ticket_id) DESC Limit 3"
+        mycursor.execute(query)
+        data = mycursor.fetchall()
+        session['data'] = data
+        destinations = []
+        count = []
+        for i in data:
+            destinations.append(i['destination'])
+            count.append(i['count'])
+        idata['destination'] = destinations
+        idata['count'] = count
+        idata['data'] = data
+    session['data'] = idata
+
+    return render_template('top_destination.html')
 @app.route('/admin_insert_airport', methods=['GET', 'POST'])
 def admin_insert_airport():
     form = Staff_insert_airport_Form()
@@ -665,13 +722,31 @@ def add_booking_agent():
 def add_flight():
     form = add_flight_form()
     if form.validate_on_submit():
+        if form.dep_time.data > form.arr_time_name.data:
+            flash("Check departure time", 'danger')
+            return redirect(url_for('add_flight'))
         with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            query = f"Select airport_name from airline_available_airports where airline_name = '{session['airline_name']}'"
+            mycursor.execute(query)
+            str_dep_airport = str(form.dep_airport_name.data)
+            str_arr_airport = str(form.arr_airport_name.data)
+            if str_arr_airport == str_dep_airport:
+                flash('Airports are the same', 'danger')
+            data = mycursor.fetchall()
+            lst = []
+            for i in data:
+                lst.append(i['airport_name'])
+            if str_dep_airport not in lst:
+                flash("Invalid Departure Airport", 'danger')
+                return redirect(url_for('add_flight'))
+            if str_arr_airport not in lst:
+                flash("Invalid Arrival Airport", 'danger')
+                return redirect(url_for('add_flight'))
             query = f'Select Max(flight_num) as max_number from flight'
             mycursor.execute(query)
             data = mycursor.fetchone()
             new_flight_number = str(data['max_number'] + 1)
-            str_dep_airport = str(form.dep_airport_name.data)
-            str_arr_airport = str(form.arr_airport_name.data)
+
             str_status = str(form.status.data)
             str_price = str(form.price.data)
             str_airplane_id = str(form.airplane_id.data)
