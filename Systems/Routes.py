@@ -505,7 +505,7 @@ def agent_account(Username):
     #     email = {session['username']}''').fetchall()
 
 @app.route('/staff_profile/<username>', methods = ['GET', 'POST'])
-def profileStf(username):
+def staff_profile(username):
     # Query for all staffs
     # all flights within a staffs airline
     #query = f"SELECT * From flight WHERE airline_name = '{session['airline_name']}'"
