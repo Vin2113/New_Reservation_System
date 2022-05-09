@@ -118,6 +118,13 @@ From booking_agent natural join purchases natural join ticket) as T on flight.fl
 Where airline_name = session[airline_name]
 group by email
 
+Select email, count(ticket_id) as sales
+from (select email, booking_agent_id
+from booking_agent natural join booking_agent_work_for where airline_name = 'Jet Blue') as T join purchases natural join ticket natural join flight
+on T.booking_agent_id = purchases.booking_agent_id
+group by email
+order by sales DESC
+
 #Admin insert airplane query
 
 Insert into airplane Values(session['airline_name'], airplane_id, seats)
@@ -152,3 +159,22 @@ Insert into permissions Values(username, permission_type)
 Update flight
 Set status = '{input_status}'
 Where flight_num = {input_flight_num)
+
+#top destination
+select arrival_airport, count(ticket_id)
+from purchases natural join flight
+order by count ticket_id
+limit 3
+
+{% if session['type'] == 'customer' %}
+                  <a class="nav-item nav-link" href="{{ url_for('customer_profile') }}"
+                >Account</a>
+              {% endif %}
+              {% if session['type'] == 'agent' %}
+                  <a class="nav-item nav-link" href="{{ url_for('agent_profile') }}"
+                >Account</a>
+              {% endif %}
+              {% if session['type'] == 'staff' %}
+                  <a class="nav-item nav-link" href="{{ url_for('staff_profile') }}"
+                  >Account</a>
+              {% endif %}

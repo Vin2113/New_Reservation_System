@@ -1,0 +1,42 @@
+{% extends "Layout.html" %} {% block content %}
+<style>
+  .table {
+    background-color: #fffff0;
+    color: black;
+  }
+</style>
+<div class="container">
+  <div class="row justify-content-center align-items-center">
+    <div class="col-md">
+      <h1>WELCOME! {{ session['username'] }}</h1>
+    </div>
+  </div>
+  <div class="row justify-content-center align-items-center">
+    <div class="col-md">
+      <h2>Top Agent</h2>
+    </div>
+  </div>
+  <table class="table table-hover table-dark">
+    <thead>
+      <tr>
+        <th scope="col">Agent_email</th>
+        <th scope="col">Commissions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in session['data']['data'] %}
+      <tr>
+        <td>{{ i.agent_emails }}</td>
+        <td>{{ i.agent_commissions}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <canvas id="6mbarchart" width="800" height="400"></canvas>
+  <script>
+    var ctx = document.getElementById('6mbarchart').getContext('2d');
+    var barchart = new Chart(ctx, {type:'bar', data: {labels: {{session['data']['agent_emails']| safe}} , datasets:[{ label:'Commissions', data: {{session['data']['agent_commissions'] | safe}} , fill: true, backgroundColor: "rgba(195, 247, 72, 0.3)", borderColor:"rgba(124, 72, 247.0.9)",borderWidth: 1}]}});
+  </script>
+</div>
+{% endblock %}
+
