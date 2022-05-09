@@ -271,7 +271,7 @@ class add_flight_form(FlaskForm):
                         validators=[DataRequired()])
     status = StringField("Status",
                         validators=[DataRequired()])
-    airplane_id = StringField("Airplane ID",
+    airplane_id = IntegerField("Airplane ID",
                            validators=[DataRequired()])
 
     submit = SubmitField('Submit')
