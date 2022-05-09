@@ -1,6 +1,6 @@
 from sre_constants import SUCCESS
 from Reservation import app, bcrypt
-from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, customerpurchaseForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm, Staff_insert_airport_Form, Staff_grant_permission_Form, Staff_add_booking_agent_Form, Operator_Update_Flight_Form, add_flight_form,rangeForm
+from Forms import RegistrationForm, LoginForm, SearchForm, Booking_agent_LoginForm, customerpurchaseForm, Airline_staff_RegistrationForm, Airline_staff_LoginForm, Agent_RegistrationForm, statuscheckForm, Staff_insert_airport_Form, Staff_grant_permission_Form, Staff_add_booking_agent_Form, Operator_Update_Flight_Form, add_flight_form,rangeForm,airplaneForm
 from dateutil.rrule import rrule, MONTHLY
 from flask_login import login_user, current_user, logout_user, login_required
 from flask import render_template, flash, redirect, session, request, url_for
@@ -539,10 +539,31 @@ def agent_account(username):
 
 @app.route('/staff_profile/<username>', methods = ['GET', 'POST'])
 def staff_profile(username):
-# Query for all staffs
-# all flights within a staffs airline
-#query = f"SELECT * From flight WHERE airline_name = '{session['airline_name']}'"
-
+    staffdata={}
+    with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+        query = f"SELECT * From flight WHERE airline_name = '{session['airline_name']}'"
+        mycursor.execute(query)
+        staffdata['flights'] = mycursor.fetchall()
+        query = f"Select customer_email, count(ticket_id) From ticket natural join purchases Where airline_name = '{session['airline_name']}' group by customer_email Limit 1;"
+        mycursor.execute(query)
+        staffdata['freqcus'] = mycursor.fetchone()
+        query = f"select sum(F.price) as total from flight as F right join ticket as T on T.flight_num = F.flight_num right join purchases as P on P.ticket_id = T.ticket_id where P.booking_agent_id is null and T.airline_name = '{session['airline_name']}' and purchase_date > date_sub(curdate(), interval 30 day)"
+        mycursor.execute(query)
+        directt = mycursor.fetchone()
+        staffdata['directt'] = directt
+        query = f"select sum(F.price) as total from flight as F right join ticket as T on T.flight_num = F.flight_num right join purchases as P on P.ticket_id = T.ticket_id where P.booking_agent_id is not null and T.airline_name = '{session['airline_name']}' and purchase_date > date_sub(curdate(), interval 30 day)"
+        mycursor.execute(query)
+        indirectt = mycursor.fetchone()
+        staffdata['indirectt'] = indirectt
+        query = f"select sum(F.price) as total from flight as F right join ticket as T on T.flight_num = F.flight_num right join purchases as P on P.ticket_id = T.ticket_id where P.booking_agent_id is null and T.airline_name = '{session['airline_name']}' and purchase_date > date_sub(curdate(), interval 1 year)"
+        mycursor.execute(query)
+        directy = mycursor.fetchone()
+        staffdata['directy'] = directy
+        query = f"select sum(F.price) as total from flight as F right join ticket as T on T.flight_num = F.flight_num right join purchases as P on P.ticket_id = T.ticket_id where P.booking_agent_id is not null and T.airline_name = '{session['airline_name']}' and purchase_date > date_sub(curdate(), interval 1 year)"
+        mycursor.execute(query)
+        indirecty = mycursor.fetchone()
+        staffdata['indirecty'] = indirecty
+    return render_template('staff_profile.html', title = session['username'], staffdata=staffdata)
 # View upcoming flights within the staffs airline by status
 #query_1 = f"SELECT * From flight WHERE airline_name = '{session['airline_name']}' and status = 'upcoming'"
 
@@ -559,7 +580,6 @@ def staff_profile(username):
 # Most Frequent customer
 #query_5 = f"Select customer_email, count(ticket_id) From ticket natural join purchases Where airline_name = '{session['airline_name']}' group by customer_email Limit 1;"
 #Admin Queries
-    return render_template('staff_profile.html')
 @app.route('/admin_insert_airport', methods=['GET', 'POST'])
 def admin_insert_airport():
     form = Staff_insert_airport_Form()
@@ -670,6 +690,32 @@ def add_flight():
         return redirect(url_for('staff_profile'))
 
     return render_template('add_flight.html', form = form)
+
+@app.route('/add_plane', methods=['GET', 'POST'])
+def add_plane():
+    form = airplaneForm()
+    if request.method=="POST":
+        airlinename = form.airlinename.data
+        print(airlinename)
+        planeid= form.planeid.data
+        seatnum = form.seats.data
+        with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+            query = f"select * from airline where airline_name = '{airlinename}'"
+            mycursor.execute(query)
+            checker = mycursor.fetchone()
+            if checker is None:
+                mycursor.close()
+                flash('UPDATE FAILED, MUST HAVE VALID AIR LINE NAME', 'danger')
+                return redirect(url_for('home'))
+            query = f"insert into airplane values('{airlinename}',{planeid},{seatnum})"
+            mycursor.execute(query)
+            staff_connection.commit()
+            mycursor.close()
+            flash('NEW PLANE ADDED!', 'success')
+            return redirect(url_for('home'))
+    return render_template('new_plane.html', form=form)
+            
+
 
 
 #operater use case

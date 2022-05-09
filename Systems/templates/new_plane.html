@@ -1,0 +1,13 @@
+{% extends "Layout.html" %}
+{% block content %}
+<div class="container">
+<div class="row">
+<form method ="POST">
+    {{ form.airlinename(class='form-control', placeholder="Airline Name")}}
+    {{ form.planeid(class='form-control', placeholder="ID")}}
+    {{ form.seats(class='form-control', placeholder="Seat number")}}
+    {{ form.submit(class= 'btn btn-outline-primary')}}
+</form>
+</div>
+</div>
+{% endblock%}

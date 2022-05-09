@@ -1,22 +1,79 @@
-{% extends "Layout.html" %}
-{% block content %}
-  <div class="container">
-    {% if session['Admin'] %}
-    <a class="nav-item nav-link" href="{{ url_for('admin_insert_airport') }}"
-                >Insert Airport</a>
-    <a class="nav-item nav-link" href="{{ url_for('grant_permission') }}"
-                >Grant Permission To</a>
-    <a class="nav-item nav-link" href="{{ url_for('add_booking_agent') }}"
-                >Add Agent</a>
-    <a class="nav-item nav-link" href="{{ url_for('add_flight') }}"
-                >Add Flight</a>
-    {% endif %}
-
-    {% if session['Operator'] %}
-                  <a class="nav-item nav-link" href="{{ url_for('update_flight') }}"
-                >update_flight</a>
-    {% endif %}
-
+{% extends "Layout.html" %} {% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col=md-8">
+      <table class="table table-hover table-dark">
+        <thead>
+          <tr>
+            <th scope="col">Airline</th>
+            <th scope="col">Departure Airport</th>
+            <th scope="col">Departure Time</th>
+            <th scope="col">Arrival Airport</th>
+            <th scope="col">Arrival Time</th>
+            <th scope="col">Price</th>
+            <th scope="col">Status</th>
+            <th scope="col">Flight Number</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i in staffdata['flights'] %}
+          <tr>
+            <td>{{ i.airline_name }}</td>
+            <td>{{ i.departure_airport }}</td>
+            <td>{{ i.departure_time }}</td>
+            <td>{{ i.arrival_airport }}</td>
+            <td>{{ i.airline_time }}</td>
+            <td>{{ i.price }}</td>
+            <td>{{ i.status }}</td>
+            <td>{{ i.flight_num }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <h2>
+        CURRENT FREQUENT CUSTOMER:{{ staffdata['freqcus']['customer_email'] }}
+      </h2>
+      <canvas id="donut30" width="800" height="400"></canvas>
+      <script>
+        var ctx = document.getElementById('donut30').getContext('2d');
+        var barchart = new Chart(ctx, {type:'doughnut', data: {labels:['Direct(30 DAY)', 'Indirect(30 DAY)'] , datasets:[{ label:'Revenue', data: [{{staffdata['directt']['total'] | safe}},{{staffdata['indirectt']['total'] | safe}}] , fill: true, backgroundColor: ["rgba(195, 247, 72)","rgba(124, 72, 247)"],hoverOffset: 4}]}});
+      </script>
+      <canvas id="donut1y" width="800" height="400"></canvas>
+      <script>
+        var ctx = document.getElementById('donut1y').getContext('2d');
+        var barchart = new Chart(ctx, {type:'doughnut', data: {labels:['Direct(1 YEAR)', 'Indirect(1 YEAR)'] , datasets:[{ label:'Revenue', data: [{{staffdata['directy']['total'] | safe}},{{staffdata['indirecty']['total'] | safe}}] , fill: true, backgroundColor: ["rgba(195, 247, 72)","rgba(124, 72, 247)"],hoverOffset: 4}]}});
+      </script>
+    </div>
+    <div class="col-md-2">
+      {% if session['Admin'] %}
+      <a
+        class="btn btn-outline-primary"
+        href="{{ url_for('admin_insert_airport') }}"
+        >Insert Airport</a
+      >
+      <a
+        class="btn btn-outline-primary"
+        href="{{ url_for('grant_permission') }}"
+        >Grant Permission To</a
+      >
+      <a
+        class="btn btn-outline-primary"
+        href="{{ url_for('add_booking_agent') }}"
+        >Add Agent</a
+      >
+      <a class="btn btn-outline-primary" href="{{ url_for('add_flight') }}"
+        >Add Flight</a
+      >
+      <a class="btn btn-outline-primary" href="{{ url_for('add_plane') }}"
+        >Add Plane</a
+      >
+      {% endif %} {% if session['Operator'] %}
+      <a class="btn btn-outline-primary" href="{{ url_for('update_flight') }}"
+        >update_flight</a
+      >
+      {% endif %}
+    </div>
   </div>
+</div>
 
 {% endblock content %}

@@ -1,10 +1,11 @@
 from random import choices
+from re import sub
 from secrets import choice
 from tkinter.tix import Select
 from jmespath import search
 from datetime import datetime, date
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, SelectField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, SelectField,IntegerField
 from wtforms.fields import DateTimeField, DateField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError,Optional
 from wtforms_components import DateRange
@@ -141,6 +142,11 @@ class statuscheckForm(FlaskForm):
     submit = SubmitField()
     
     
+class airplaneForm(FlaskForm):
+    airlinename = StringField("Airline Name", validators=[DataRequired()])
+    planeid = IntegerField("Plane ID", validators=[DataRequired()])
+    seats = IntegerField("Seat Number", validators=[DataRequired()])
+    submit = SubmitField("Submit")
     
 
 class Airline_staff_LoginForm(FlaskForm):
