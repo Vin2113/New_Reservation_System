@@ -178,3 +178,21 @@ limit 3
                   <a class="nav-item nav-link" href="{{ url_for('staff_profile') }}"
                   >Account</a>
               {% endif %}
+              select monthname(P.purchase_date) as month, year(P.purchase_date) as year, sum(F.price) as spending
+
+from  flight join ticket on flight.flight_num = ticket.flight_num
+where airline_name = 'Jet Blue'
+and P.purchase_date <= '{datef}' AND P.purchase_date >='{dates}'
+group by month(P.purchase_date),year(P.purchase_date)
+
+select monthname(purchase_date) as month, year(P.purchase_date) as year, count(ticket_id) as sales
+from purchases natural join ticket natural join flight
+where flight.airline_name = 'Jet Blue'
+and P.purchase_date <= '{datef}' AND purchase_date >='{dates}'
+group by month(ppurchase_date),year(ppurchase_date)
+
+select monthname(purchase_date) as month, year(purchase_date) as year, count(purchases.ticket_id) as sales
+from purchases join ticket natural join flight
+where flight.airline_name = 'Jet Blue'
+and purchase_date <= '{datef}' AND purchase_date >='{dates}'
+group by purchase_date
