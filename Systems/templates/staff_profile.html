@@ -1,7 +1,7 @@
 {% extends "Layout.html" %} {% block content %}
 <div class="container">
   <div class="row">
-    <div class="col-md-8">
+    <div class="col-md-6">
       <table class="table table-hover table-dark">
         <thead>
           <tr>
@@ -45,15 +45,15 @@
       </script>
     </div>
     <div class="container">
-      <a class="nav-item nav-link" href="{{ url_for('top_agent_by_sales_1month') }}"
+      <a class="btn btn-outline-primary" href="{{ url_for('top_agent_by_sales_1month') }}"
                 >View Top Agent by Sales 1 month</a>
-      <a class="nav-item nav-link" href="{{ url_for('top_agent_by_sales_1year') }}"
+      <a class="btn btn-outline-primary" href="{{ url_for('top_agent_by_sales_1year') }}"
                 >View Top Agent by Sales 1 year</a>
-      <a class="nav-item nav-link" href="{{ url_for('top_agent_by_commissions') }}"
+      <a class="btn btn-outline-primary" href="{{ url_for('top_agent_by_commissions') }}"
                 >View Top Agent by Commissions past year</a>
-      <a class="nav-item nav-link" href="{{ url_for('top_destination_3month') }}"
+      <a class="btn btn-outline-primary" href="{{ url_for('top_destination_3month') }}"
                 >Top Destination 3 Month</a>
-      <a class="nav-item nav-link" href="{{ url_for('top_destination_1year') }}"
+      <a class="btn btn-outline-primary" href="{{ url_for('top_destination_1year') }}"
                 >Top Destination 1 Year</a>
     </div>
       <div class="row">

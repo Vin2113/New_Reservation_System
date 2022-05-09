@@ -278,11 +278,11 @@ def register():
         exp_time = form.passport_expiration.data
         dob_time = form.date_of_birth.data
         #datetime.datetime(int(form.date_of_birth.data[-4:-1]), int(form.date_of_birth.data[0:2]), int(form.date_of_birth.data[3:5]))
-        query = f"Insert INTO customer VALUES('{email}', '{form.name.data}', '{hashed_password}','{form.building_number.data}','{form.street.data}','{form.city.data}','{form.state.data}', {phone_number} ,'{form.passport_number.data}','{exp_time}','{form.passport_country.data}','{dob_time}')"
-        my_cursor = connection.cursor()
-        my_cursor.execute(query)
-        connection.commit()
-        my_cursor.close()
+        with customer_connection.cursor()as my_cursor:
+            query = f"Insert INTO customer VALUES('{email}', '{form.name.data}', '{hashed_password}','{form.building_number.data}','{form.street.data}','{form.city.data}','{form.state.data}', {phone_number} ,'{form.passport_number.data}','{exp_time}','{form.passport_country.data}','{dob_time}')"
+            my_cursor.execute(query)
+            customer_connection.commit()
+            my_cursor.close()
         flash(f'You can now login {form.name.data}!', 'success')
         return redirect(url_for('login'))
     return render_template('Register.html', title='Register', form=form)
