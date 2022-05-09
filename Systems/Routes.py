@@ -368,8 +368,6 @@ def agent_login():
             my_cursor.execute(query)
             aline = my_cursor.fetchall()
             my_cursor.close()
-            print(account)
-            print(aline)
             # checking user data from database for verification
             if (account == None):
                 flash('Login unsuccesful, please check Email, Password, and ID.', 'danger')
@@ -615,23 +613,33 @@ def staffcharts(datef, dates):
     print(ldata)
     return render_template('staff_charts.html', title = session['username'] +'chart', label =label, ldata=ldata)
 
-
-#view all customer of particular
-#query_2 = f"Select customer_email From ticket natural join purchases Where airline_name = '{session['airline_name']}' and flight_num = '{input_flight_num}'
-
-# See all flights taken by a certain customer
-#query_3 = f"Select flight_num From ticket natural join purchases Where airline_name = '{session['airline_name']}' and customer_email = {input_customer_email}
-
-#Reports of of tickets sold
-#Amount of tickets sold in a month
-#query_4 = f"Select count(ticket_id) From ticket natural join purchases Where airline_name = session[airline_name] group by customer_email Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) and airline_name = {airline_name}; Limit 1;"
-
-@app.route('/top_agent_by_sales', methods=['GET', 'POST'])
-def top_agent_by_sales():
+@app.route('/top_agent_by_sales_1month', methods=['GET', 'POST'])
+def top_agent_by_sales_1month():
     session.pop('data', None)
     idata = {}
     with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
         query = f"Select email, count(ticket_id) as sales from (select email, booking_agent_id from booking_agent natural join booking_agent_work_for where airline_name = '{session['airline_name']}') as T join purchases on T.booking_agent_id = purchases.booking_agent_id natural join ticket natural join flight  Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) group by email order by sales DESC Limit 5"
+        mycursor.execute(query)
+        data = mycursor.fetchall()
+        session['data'] = data
+        email = []
+        sales = []
+        for i in data:
+            email.append(i['email'])
+            sales.append(i['sales'])
+        idata['agent_emails'] = email
+        idata['agent_sales'] = sales
+        idata['data'] = data
+    session['data'] = idata
+
+    return render_template('top_agent_by_sales.html')
+
+@app.route('/top_agent_by_sales_1year', methods=['GET', 'POST'])
+def top_agent_by_sales_1year():
+    session.pop('data', None)
+    idata = {}
+    with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+        query = f"Select email, count(ticket_id) as sales from (select email, booking_agent_id from booking_agent natural join booking_agent_work_for where airline_name = '{session['airline_name']}') as T join purchases on T.booking_agent_id = purchases.booking_agent_id natural join ticket natural join flight  Where purchase_date > Date_Sub(curdate(), INTERVAL 1 YEAR) group by email order by sales DESC Limit 5"
         mycursor.execute(query)
         data = mycursor.fetchall()
         session['data'] = data
@@ -653,7 +661,7 @@ def top_agent_by_commissions():
     session.pop('data', None)
     idata = {}
     with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-        query = f"Select email, sum(price * .1) as commissions from (select email, booking_agent_id from booking_agent natural join booking_agent_work_for where airline_name = '{session['airline_name']}') as T join purchases on T.booking_agent_id = purchases.booking_agent_id natural join ticket natural join flight  Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) group by email order by commissions DESC Limit 5"
+        query = f"Select email, sum(price * .1) as commissions from (select email, booking_agent_id from booking_agent natural join booking_agent_work_for where airline_name = '{session['airline_name']}') as T join purchases on T.booking_agent_id = purchases.booking_agent_id natural join ticket natural join flight  Where purchase_date > Date_Sub(curdate(), INTERVAL 1 YEAR) group by email order by commissions DESC Limit 5"
         mycursor.execute(query)
         data = mycursor.fetchall()
         session['data'] = data
@@ -669,8 +677,28 @@ def top_agent_by_commissions():
 
     return render_template('top_agent_by_commissions.html')
 
-@app.route('/top_destination', methods=['GET', 'POST'])
-def top_destination():
+@app.route('/top_destination_3month', methods=['GET', 'POST'])
+def top_destination_3month():
+    session.pop('data', None)
+    idata = {}
+    with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+        query = f"SELECT arrival_airport as destination, count(ticket_id) as count FROM purchases natural join flight Where purchase_date > Date_Sub(curdate(), INTERVAL 3 MONTH) and airline_name = '{session['airline_name']}' group by arrival_airport order by count(ticket_id) DESC Limit 3"
+        mycursor.execute(query)
+        data = mycursor.fetchall()
+        session['data'] = data
+        destinations = []
+        count = []
+        for i in data:
+            destinations.append(i['destination'])
+            count.append(i['count'])
+        idata['destination'] = destinations
+        idata['count'] = count
+        idata['data'] = data
+    session['data'] = idata
+
+    return render_template('top_destination.html')
+@app.route('/top_destination_1year', methods=['GET', 'POST'])
+def top_destination_1year():
     session.pop('data', None)
     idata = {}
     with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
@@ -689,6 +717,7 @@ def top_destination():
     session['data'] = idata
 
     return render_template('top_destination.html')
+
 @app.route('/admin_insert_airport', methods=['GET', 'POST'])
 def admin_insert_airport():
     form = Staff_insert_airport_Form()
@@ -708,12 +737,16 @@ def admin_insert_airport():
                 mycursor.close()
                 staff_connection.commit()
         with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-            str_airport_name = form.airport_name.data
+            query = f"Select airport_name from airline_available_airports where airport_name = '{str_airport_name}' and airline_name = '{session['airline_name']}'"
+            mycursor.execute(query)
+            data = mycursor.fetchall()
+            if data:
+                flash('Aiport Already Added', 'danger')
+                return redirect(request.url)
             query = f"Insert into airline_available_airports Values('{session['airline_name']}', '{str_airport_name}')"
             mycursor.execute(query)
             staff_connection.commit()
             mycursor.close()
-            #Search for customer on a flight
         flash('Added Airport', 'success')
         return redirect(url_for('staff_profile', username=session['username']))
     return render_template('insert_airport.html', form=form)
@@ -731,12 +764,14 @@ def grant_permission():
             data = mycursor.fetchone()
             if data is None:
                 flash('User is not a staff, Pleas type in the right username', 'danger')
+                return redirect(request.url)
             else:
                 query = f"Select username from permission where username = '{str_username}' AND permission_type = '{str_status}'"
                 mycursor.execute(query)
                 data = mycursor.fetchall()
                 if data:
-                    flash('User already have this permission')
+                    flash('User already have this permission', 'danger')
+                    return redirect(request.url)
                 else:
                     query = f"Insert into permission Values('{str_username}', '{str_status}')"
                     mycursor.execute(query)
@@ -744,6 +779,7 @@ def grant_permission():
                 mycursor.close()
                 flash('Permission Granted', 'success')
                 return redirect(url_for('staff_profile', username=session['username']))
+
     return render_template('staff_grant_permission.html', form=form)
 
 @app.route('/add_booking_agent', methods=['GET', 'POST'])
@@ -758,7 +794,8 @@ def add_booking_agent():
             data = mycursor.fetchone()
             mycursor.close()
             if data:
-                flash('Agent Already Added', 'success')
+                flash('Agent Already Added', 'danger')
+                return redirect(request.url)
             else:
                 with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
                     str_email = str(form.email.data)
@@ -855,6 +892,7 @@ def update_flight():
             if data is None:
                 flash('Flight is not found, type in the right flight number', 'danger')
                 mycursor.close()
+                return redirect(request.url)
             else:
                 str_flight_status = str(form.flight_status.data)
                 str_flight_num = str(form.flight_num.data)
@@ -862,6 +900,7 @@ def update_flight():
                 mycursor.execute(query)
                 staff_connection.commit()
                 mycursor.close()
+                flash('Flight status updated', 'success')
                 return redirect(url_for('home'))
 
     return render_template('staff_update_flight.html', form=form)
