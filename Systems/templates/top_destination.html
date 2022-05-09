@@ -19,15 +19,15 @@
   <table class="table table-hover table-dark">
     <thead>
       <tr>
-        <th scope="col">Agent_email</th>
-        <th scope="col">Commissions</th>
+        <th scope="col">Destination</th>
+        <th scope="col">Count</th>
       </tr>
     </thead>
     <tbody>
       {% for i in session['data']['data'] %}
       <tr>
-        <td>{{ i.agent_emails }}</td>
-        <td>{{ i.agent_commissions}}</td>
+        <td>{{ i.destination }}</td>
+        <td>{{ i.count}}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -35,7 +35,7 @@
   <canvas id="6mbarchart" width="800" height="400"></canvas>
   <script>
     var ctx = document.getElementById('6mbarchart').getContext('2d');
-    var barchart = new Chart(ctx, {type:'bar', data: {labels: {{session['data']['agent_emails']| safe}} , datasets:[{ label:'Commissions', data: {{session['data']['agent_commissions'] | safe}} , fill: true, backgroundColor: "rgba(195, 247, 72, 0.3)", borderColor:"rgba(124, 72, 247.0.9)",borderWidth: 1}]}});
+    var barchart = new Chart(ctx, {type:'bar', data: {labels: {{session['data']['destination']| safe}} , datasets:[{ label:'Sales', data: {{session['data']['count'] | safe}} , fill: true, backgroundColor: "rgba(195, 247, 72, 0.3)", borderColor:"rgba(124, 72, 247.0.9)",borderWidth: 1}]}});
   </script>
 </div>
 {% endblock %}

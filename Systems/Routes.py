@@ -360,36 +360,32 @@ def agent_login():
 def staff_login():
     form = Airline_staff_LoginForm()
     if form.validate_on_submit():
-        try:
-            with staff_connection.cursor() as mycursor:
-                str_username = str(form.username.data)
-                str_airline_name = str(form.airline_name.data)
-                query = f"SELECT username, password From airline_staff  WHERE username = '{str_username}' and airline_name = '{str_airline_name}'"
+        with staff_connection.cursor() as mycursor:
+            str_username = str(form.username.data)
+            str_airline_name = str(form.airline_name.data)
+            query = f"SELECT username, password From airline_staff  WHERE username = '{str_username}' and airline_name = '{str_airline_name}'"
+            mycursor.execute(query)
+            account = mycursor.fetchone()
+            # checking user data from database for verification
+            if account is None:
+                flash('Login unsuccesful, please check Username, Password, and Airline_name.', 'danger')
+            elif account[0] == str_username and bcrypt.check_password_hash(account[1], form.password.data):
+                query = f"SELECT permission_type From permission WHERE username = '{str_username}'"
                 mycursor.execute(query)
-                account = mycursor.fetchone()
-                # checking user data from database for verification
-                if account[0] == str_username and bcrypt.check_password_hash(account[1], form.password.data):
-                    query = f"SELECT permission_type From permission WHERE username = '{str_username}'"
-                    mycursor.execute(query)
-                    data = mycursor.fetchall()
-                    for i in data:
-                        if i[0] == "Admin":
-                            session['Admin'] = True
-                        if i[0] == "Operator":
-                            session['Operator'] = True
-                    session['type'] = 'staff'
-                    session['loggedin'] = True
-                    session['username'] = account[0]
-                    session['password'] = account[1]
-                    session['airline_name'] = str_airline_name
-                    flash('Login Successful', 'success')
-                    mycursor.close()
-                    return redirect(url_for('staff_profile'))
-                else:
-                    flash('Login unsuccesful, please check Username, Password, and Airline_name.', 'danger')
-        except:
-            flash('Login unsuccesful, please check Username, Password, and Airline_name.', 'danger')
-            return redirect(url_for('staff_login'))
+                data = mycursor.fetchall()
+                for i in data:
+                    if i[0] == "Admin":
+                        session['Admin'] = True
+                    if i[0] == "Operator":
+                        session['Operator'] = True
+                session['type'] = 'staff'
+                session['loggedin'] = True
+                session['username'] = account[0]
+                session['password'] = account[1]
+                session['airline_name'] = str_airline_name
+                flash('Login Successful', 'success')
+                mycursor.close()
+                return redirect(url_for('home'))
     return render_template('Staff_login.html', title='Login', form=form)
 
 
@@ -512,28 +508,51 @@ def top_agent_by_sales():
             sales.append(i['sales'])
         idata['agent_emails'] = email
         idata['agent_sales'] = sales
-    session['data'] = data
+        idata['data'] = data
+    session['data'] = idata
 
     return render_template('top_agent_by_sales.html')
 
 
 @app.route('/top_agent_by_commissions', methods=['GET', 'POST'])
 def top_agent_by_commissions():
+    session.pop('data', None)
+    idata = {}
     with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-        query = f"Select email, sum(price * .1) as commissions as sales from (select email, booking_agent_id from booking_agent natural join booking_agent_work_for where airline_name = '{session['airline_name']}') as T join purchases on T.booking_agent_id = purchases.booking_agent_id natural join ticket natural join flight  Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) group by email order by commissions DESC Limit 5"
+        query = f"Select email, sum(price * .1) as commissions from (select email, booking_agent_id from booking_agent natural join booking_agent_work_for where airline_name = '{session['airline_name']}') as T join purchases on T.booking_agent_id = purchases.booking_agent_id natural join ticket natural join flight  Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) group by email order by commissions DESC Limit 5"
         mycursor.execute(query)
         data = mycursor.fetchall()
         session['data'] = data
+        email = []
+        commissions = []
+        for i in data:
+            email.append(i['email'])
+            commissions.append(float(i['commissions']))
+        idata['agent_emails'] = email
+        idata['agent_commissions'] = commissions
+        idata['data'] = data
+    session['data'] = idata
 
-    return render_template('top_agent_by_commissiona.html')
+    return render_template('top_agent_by_commissions.html')
 
 @app.route('/top_destination', methods=['GET', 'POST'])
 def top_destination():
+    session.pop('data', None)
+    idata = {}
     with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-        query = f"SELECT arrival_airport, count(ticket_id) FROM purchases natural join flight Where purchase_date > Date_Sub(curdate(), INTERVAL 1 YEAR) and airline_name = '{session['airline_name']}' group by arrival_airport order by count(ticket_id) DESC Limit 3"
+        query = f"SELECT arrival_airport as destination, count(ticket_id) as count FROM purchases natural join flight Where purchase_date > Date_Sub(curdate(), INTERVAL 1 YEAR) and airline_name = '{session['airline_name']}' group by arrival_airport order by count(ticket_id) DESC Limit 3"
         mycursor.execute(query)
         data = mycursor.fetchall()
         session['data'] = data
+        destinations = []
+        count = []
+        for i in data:
+            destinations.append(i['destination'])
+            count.append(i['count'])
+        idata['destination'] = destinations
+        idata['count'] = count
+        idata['data'] = data
+    session['data'] = idata
 
     return render_template('top_destination.html')
 @app.route('/admin_insert_airport', methods=['GET', 'POST'])
