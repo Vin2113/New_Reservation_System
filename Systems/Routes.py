@@ -855,25 +855,27 @@ def add_flight():
 @app.route('/add_plane', methods=['GET', 'POST'])
 def add_plane():
     form = airplaneForm()
-    if request.method=="POST":
-        airlinename = form.airlinename.data
-        print(airlinename)
-        planeid= form.planeid.data
+    if form.validate_on_submit():
+        plane_id = form.planeid.data
         seatnum = form.seats.data
         with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-            query = f"select * from airline where airline_name = '{airlinename}'"
+            query = f"select airplane_id from airplane where airplane_id = {plane_id}"
             mycursor.execute(query)
-            checker = mycursor.fetchone()
-            if checker is None:
+            data = mycursor.fetchone()
+            if data:
+                query = f"UPDATE airplanes SET airline_name = '{session['airline_name']}' WHERE flight_num = '{data['airplane_id']}';"
+                mycursor.execute(query)
+                staff_connection.commit()
                 mycursor.close()
-                flash('UPDATE FAILED, MUST HAVE VALID AIR LINE NAME', 'danger')
+                flash('AIRPLANE ADDED!', 'success')
                 return redirect(url_for('home'))
-            query = f"insert into airplane values('{airlinename}',{planeid},{seatnum})"
-            mycursor.execute(query)
-            staff_connection.commit()
-            mycursor.close()
-            flash('NEW PLANE ADDED!', 'success')
-            return redirect(url_for('home'))
+            else:
+                query = f"insert into airplane values('{session['airline_name']}',{plane_id},{seatnum})"
+                mycursor.execute(query)
+                staff_connection.commit()
+                mycursor.close()
+                flash('AIRPLANE ADDED!', 'success')
+                return redirect(url_for('home'))
     return render_template('new_plane.html', form=form)
             
 

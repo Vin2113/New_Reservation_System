@@ -143,11 +143,15 @@ class statuscheckForm(FlaskForm):
     
     
 class airplaneForm(FlaskForm):
-    airlinename = StringField("Airline Name", validators=[DataRequired()])
-    planeid = IntegerField("Plane ID", validators=[DataRequired()])
+    planeid = StringField("Plane ID", validators=[DataRequired()])
     seats = IntegerField("Seat Number", validators=[DataRequired()])
     submit = SubmitField("Submit")
-    
+    def validate_planeid(self,planeid):
+        if not planeid.data.isdigit():
+            raise ValidationError('Please enter valid digits.')
+
+
+
 
 class Airline_staff_LoginForm(FlaskForm):
     username = StringField('Username',
