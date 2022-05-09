@@ -1,0 +1,27 @@
+{% extends 'Layout.html'%}
+{% block content%}
+
+<div class='container-fluid'>
+    <div class="row justify-content-center align-items-center">
+        <div class='col'>
+            <h1>TOTAL SPENDING: ${{sumoney}}</h1>
+        </div>
+    <canvas id='barrange'width="800" height="400"></canvas>
+    <script>
+        var ctx = document.getElementById('barrange').getContext('2d');
+        var barchart = new Chart(ctx, {type:'bar',
+         data: {
+         labels: {{label| safe }} , 
+         datasets:[{ label:'Spending', data: {{ldata| safe}} , 
+         fill: true, 
+         backgroundColor: "rgba(195, 247, 72, 0.3)", 
+         borderColor:"rgba(124, 72, 247.0.9)",
+         borderWidth: 1}]
+        },
+         options:{responsive: false}
+        }
+         );
+    </script>
+</div>
+</div>
+{% endblock %}
