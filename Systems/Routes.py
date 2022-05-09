@@ -304,9 +304,8 @@ def agent_register():
             data = my_cursor.fetchone()
             new_id = str(int(data['max']) + 1)
             query = f"Insert INTO booking_agent VALUES('{email}', '{hashed_password}','{new_id}')"
-            my_cursor = connection.cursor()
             my_cursor.execute(query)
-            connection.commit()
+            agent_connection.commit()
             my_cursor.close()
             flash(f'You can now login {form.email.data}, you Agent ID will be {new_id}!', 'success')
             return redirect(url_for('agent_login'))
@@ -324,13 +323,13 @@ def staff_register():
         first_name = str(form.first_name.data)
         last_name = str(form.last_name.data)
         airline_name = str(form.airline_name.data)
-        query = f"Insert INTO airline_staff VALUES('{username}', '{hashed_password}','{first_name}','{last_name}', '{dob_time}', '{airline_name}')"
-        my_cursor = connection.cursor()
-        my_cursor.execute(query)
-        connection.commit()
-        my_cursor.close()
-        flash(f'You can now login {form.first_name.data}!', 'success')
-        return redirect(url_for('staff_login'))
+        with staff_connection.cursor() as my_cursor:
+            query = f"Insert INTO airline_staff VALUES('{username}', '{hashed_password}','{first_name}','{last_name}', '{dob_time}', '{airline_name}')"
+            my_cursor.execute(query)
+            staff_connection.commit()
+            my_cursor.close()
+            flash(f'You can now login {form.first_name.data}!', 'success')
+            return redirect(url_for('staff_login'))
     return render_template('staff_register.html', title='Register', form=form)
 
 
@@ -340,9 +339,10 @@ def login():
     if form.validate_on_submit():
         str_email = str(form.email.data)
         query = f"SELECT email, password from customer WHERE email = '{str_email}'"
-        my_cursor = connection.cursor()
-        my_cursor.execute(query)
-        account = my_cursor.fetchone()
+        with connection.cursor as my_cursor:
+            my_cursor = connection.cursor()
+            my_cursor.execute(query)
+            account = my_cursor.fetchone()
         #checking user data from database for verification
         if account and bcrypt.check_password_hash(account[1],form.password.data):
             session['type'] = 'customer'
@@ -362,12 +362,17 @@ def agent_login():
         with agent_connection.cursor() as my_cursor:
             str_email = str(form.email.data)
             str_id = str(form.Id.data)
+            print(str_email)
+            print(str_id)
             query = f"SELECT email, password, booking_agent_id from booking_agent WHERE email = '{str_email}'"
             my_cursor.execute(query)
             account = my_cursor.fetchone()
             query = f"Select email, airline_name from booking_agent_work_for where email = '{str_email}'"
             my_cursor.execute(query)
             aline = my_cursor.fetchall()
+            my_cursor.close()
+            print(account)
+            print(aline)
             # checking user data from database for verification
             if (account == None):
                 flash('Login unsuccesful, please check Email, Password, and ID.', 'danger')
@@ -402,7 +407,8 @@ def staff_login():
             mycursor.execute(query)
             account = mycursor.fetchone()
             # checking user data from database for verification
-            if account[0] == str_username and bcrypt.check_password_hash(account[1], form.password.data):
+
+            if account is not None and account[0] == str_username and bcrypt.check_password_hash(account[1], form.password.data):
                 query = f"SELECT permission_type From permission WHERE username = '{str_username}'"
                 mycursor.execute(query)
                 data = mycursor.fetchall()
@@ -494,7 +500,7 @@ def agent_account(username):
     clabels = [i['customer_email'] for i in tfcc]
     tdata = [i['number_of_tickets'] for i in tfct]
     cdata = [float(i['commissions']) for i in tfcc]
-    
+    print(sumcomthirty)
     if request.method == "POST":
             fdate = form.dateone.data
             sdate = form.datetwo.data

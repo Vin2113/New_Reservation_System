@@ -36,12 +36,14 @@
       {% endfor %}
     </tbody>
   </table>
+  {% if sumcomthirty[0]['commissions'] != none%}
   <div class="row justify-content-center align-items-center">
     <div class="col-md">
       <h2>Total Commission (30days) = ${{sumcomthirty[0]['commissions']}}</h2>
       <h2>Average Commission per ticket (30days) = ${{sumcomthirty[0]['commissions'] / sumcomthirty[0]['tickets']}}</h2>
     </div>
   </div>
+  {% endif %}
   <div class="row justify-content-center align-items-center">
     <div class="col-md">
       <h2>Top 5 Customer by tickets purchased in the last month:</h2>
