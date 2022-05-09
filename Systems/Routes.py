@@ -667,7 +667,7 @@ def add_flight():
     if form.validate_on_submit():
         with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
             query = f'Select Max(flight_num) as max_number from flight'
-            mycursor.excecute(query)
+            mycursor.execute(query)
             data = mycursor.fetchone()
             new_flight_number = str(data['max_number'] + 1)
             str_dep_airport = str(form.dep_airport_name.data)
@@ -677,7 +677,7 @@ def add_flight():
             str_airplane_id = str(form.airplane_id.data)
             dep_time = form.dep_time.data
             arr_time = form.arr_time.data
-            query = f"Insert into flight Values('{session['airline_name']}', {new_flight_number}, '{str_dep_airport}','{str_arr_airport}','{dep_time}','{arr_time}',{str_price},'{str_status}', {str_airplane_id})"
+            query = f"Insert into flight Values('{session['airline_name']}', {new_flight_number}, '{str_dep_airport}','{dep_time}','{str_arr_airport}','{arr_time}',{str_price},'{str_status}', {str_airplane_id})"
             mycursor.execute(query)
             staff_connection.commit()
             mycursor.close()
@@ -686,9 +686,6 @@ def add_flight():
 
         flash('unSuccesful', 'danger')
         return redirect(url_for('add_flight'))
-    else:
-        return redirect(url_for('staff_profile'))
-
     return render_template('add_flight.html', form = form)
 
 @app.route('/add_plane', methods=['GET', 'POST'])
