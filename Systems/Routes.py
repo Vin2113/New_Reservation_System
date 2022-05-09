@@ -50,11 +50,11 @@ def profile():
     if(session['type']==None):
         return redirect(url_for('home'))
     if(session['type'] == 'customer'):
-        return redirect(url_for('profileCust',Username = session['username']))
+        return redirect(url_for('profileCust',username = session['username']))
     if(session['type'] == 'agent'):
-        return redirect(url_for('profileAgent',Username = session['username']))
+        return redirect(url_for('profileAgent',username = session['username']))
     if(session['type'] == 'staff'):
-        return redirect(url_for('profileStf', Username = session['username']))
+        return redirect(url_for('profileStf', username = session['username']))
     
 
 @app.route('/profile/<Username>', methods=["GET","POST"])
@@ -120,15 +120,6 @@ def profileAgent(Username):
             #history = mycursor.fetchall()
             #mycursor.close()
 
-
-@app.route('/profileStf/<Username>', methods=["GET","POST"])
-def profileStf(Username):
-    return render_template('Profile.html', title='')
-        #with connection.cursor(pymysql.cursors.DictCursor) as mycursor:
-            #mycursor.execute("SELECT ")
-            #history = mycursor.fetchall()
-            #mycursor.close()
-        
 
 @app.route('/search', methods = ["POST"])
 def search():
@@ -369,32 +360,36 @@ def agent_login():
 def staff_login():
     form = Airline_staff_LoginForm()
     if form.validate_on_submit():
-        with staff_connection.cursor() as mycursor:
-            str_username = str(form.username.data)
-            str_airline_name = str(form.airline_name.data)
-            query = f"SELECT username, password From airline_staff  WHERE username = '{str_username}' and airline_name = '{str_airline_name}'"
-            mycursor.execute(query)
-            account = mycursor.fetchone()
-            # checking user data from database for verification
-            if account[0] == str_username and bcrypt.check_password_hash(account[1], form.password.data):
-                query = f"SELECT permission_type From permission WHERE username = '{str_username}'"
+        try:
+            with staff_connection.cursor() as mycursor:
+                str_username = str(form.username.data)
+                str_airline_name = str(form.airline_name.data)
+                query = f"SELECT username, password From airline_staff  WHERE username = '{str_username}' and airline_name = '{str_airline_name}'"
                 mycursor.execute(query)
-                data = mycursor.fetchall()
-                for i in data:
-                    if i[0] == "Admin":
-                        session['Admin'] = True
-                    if i[0] == "Operator":
-                        session['Operator'] = True
-                session['type'] = 'staff'
-                session['loggedin'] = True
-                session['username'] = account[0]
-                session['password'] = account[1]
-                session['airline_name'] = str_airline_name
-                flash('Login Successful', 'success')
-                mycursor.close()
-                return redirect(url_for('staff_profile'))
-            else:
-                flash('Login unsuccesful, please check Username, Password, and Airline_name.', 'danger')
+                account = mycursor.fetchone()
+                # checking user data from database for verification
+                if account[0] == str_username and bcrypt.check_password_hash(account[1], form.password.data):
+                    query = f"SELECT permission_type From permission WHERE username = '{str_username}'"
+                    mycursor.execute(query)
+                    data = mycursor.fetchall()
+                    for i in data:
+                        if i[0] == "Admin":
+                            session['Admin'] = True
+                        if i[0] == "Operator":
+                            session['Operator'] = True
+                    session['type'] = 'staff'
+                    session['loggedin'] = True
+                    session['username'] = account[0]
+                    session['password'] = account[1]
+                    session['airline_name'] = str_airline_name
+                    flash('Login Successful', 'success')
+                    mycursor.close()
+                    return redirect(url_for('staff_profile'))
+                else:
+                    flash('Login unsuccesful, please check Username, Password, and Airline_name.', 'danger')
+        except:
+            flash('Login unsuccesful, please check Username, Password, and Airline_name.', 'danger')
+            return redirect(url_for('staff_login'))
     return render_template('Staff_login.html', title='Login', form=form)
 
 
@@ -424,10 +419,8 @@ def logout():
         session.pop('password', None)
         session.pop('airline', None)
         session.pop('type', None)
-        if session['Admin']:
-            session.pop('Admin', None)
-        if session['Operator']:
-            session.pop('Operator', None)
+        session.pop('Admin', None)
+        session.pop('Operator', None)
 
 # Redirect to login page
     return redirect(url_for('home'))
@@ -480,8 +473,8 @@ def agent_account():
     #     where
     #     email = {session['username']}''').fetchall()
 
-@app.route('/staff_profile', methods = ['GET', 'POST'])
-def staff_profile():
+@app.route('/staff_profile/<username>', methods = ['GET', 'POST'])
+def profileStf(username):
     # Query for all staffs
     # all flights within a staffs airline
     #query = f"SELECT * From flight WHERE airline_name = '{session['airline_name']}'"
@@ -503,6 +496,46 @@ def staff_profile():
     #query_5 = f"Select customer_email, count(ticket_id) From ticket natural join purchases Where airline_name = '{session['airline_name']}' group by customer_email Limit 1;"
     #Admin Queries
     return render_template('staff_profile.html')
+@app.route('/top_agent_by_sales', methods=['GET', 'POST'])
+def top_agent_by_sales():
+    session.pop('data', None)
+    idata = {}
+    with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+        query = f"Select email, count(ticket_id) as sales from (select email, booking_agent_id from booking_agent natural join booking_agent_work_for where airline_name = '{session['airline_name']}') as T join purchases on T.booking_agent_id = purchases.booking_agent_id natural join ticket natural join flight  Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) group by email order by sales DESC Limit 5"
+        mycursor.execute(query)
+        data = mycursor.fetchall()
+        session['data'] = data
+        email = []
+        sales = []
+        for i in data:
+            email.append(i['email'])
+            sales.append(i['sales'])
+        idata['agent_emails'] = email
+        idata['agent_sales'] = sales
+    session['data'] = data
+
+    return render_template('top_agent_by_sales.html')
+
+
+@app.route('/top_agent_by_commissions', methods=['GET', 'POST'])
+def top_agent_by_commissions():
+    with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+        query = f"Select email, sum(price * .1) as commissions as sales from (select email, booking_agent_id from booking_agent natural join booking_agent_work_for where airline_name = '{session['airline_name']}') as T join purchases on T.booking_agent_id = purchases.booking_agent_id natural join ticket natural join flight  Where purchase_date > Date_Sub(curdate(), INTERVAL 30 DAY) group by email order by commissions DESC Limit 5"
+        mycursor.execute(query)
+        data = mycursor.fetchall()
+        session['data'] = data
+
+    return render_template('top_agent_by_commissiona.html')
+
+@app.route('/top_destination', methods=['GET', 'POST'])
+def top_destination():
+    with staff_connection.cursor(pymysql.cursors.DictCursor) as mycursor:
+        query = f"SELECT arrival_airport, count(ticket_id) FROM purchases natural join flight Where purchase_date > Date_Sub(curdate(), INTERVAL 1 YEAR) and airline_name = '{session['airline_name']}' group by arrival_airport order by count(ticket_id) DESC Limit 3"
+        mycursor.execute(query)
+        data = mycursor.fetchall()
+        session['data'] = data
+
+    return render_template('top_destination.html')
 @app.route('/admin_insert_airport', methods=['GET', 'POST'])
 def admin_insert_airport():
     form = Staff_insert_airport_Form()

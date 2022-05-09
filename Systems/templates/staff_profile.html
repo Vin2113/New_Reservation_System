@@ -1,6 +1,12 @@
 {% extends "Layout.html" %}
 {% block content %}
   <div class="container">
+      <a class="nav-item nav-link" href="{{ url_for('top_agent_by_sales') }}"
+                >View Top Agent by Sales</a>
+      <a class="nav-item nav-link" href="{{ url_for('top_agent_by_commissions') }}"
+                >View Top Agent by Commissions</a>
+      <a class="nav-item nav-link" href="{{ url_for('top_destination') }}"
+                >Top Destination</a>
     {% if session['Admin'] == True %}
     <a class="nav-item nav-link" href="{{ url_for('admin_insert_airport') }}"
                 >Insert Airport</a>
